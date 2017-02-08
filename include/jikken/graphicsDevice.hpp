@@ -25,4 +25,33 @@
 #ifndef _JIKKEN_GRAPHICSDEVICE_HPP_
 #define _JIKKEN_GRAPHICSDEVICE_HPP_
 
+#include <vector>
+#include <string>
+#include "jikken/enums.hpp"
+#include "jikken/commands.hpp"
+#include "jikken/commandQueue.hpp"
+
+namespace Jikken
+{
+	struct ShaderDetails
+	{
+		std::string file;
+		ShaderStage stage;
+	};
+
+	class GraphicsDevice
+	{
+	public:
+		virtual ~GraphicsDevice() {}
+
+		virtual ShaderHandle createShader(const std::vector<ShaderDetails> &shaders) = 0;
+
+		virtual BufferHandle createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, float *data) = 0;
+
+		virtual void deleteBuffer(BufferHandle handle) = 0;
+
+		virtual void deleteShader(ShaderHandle handle) = 0;
+	};
+}
+
 #endif

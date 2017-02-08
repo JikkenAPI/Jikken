@@ -25,8 +25,13 @@
 #ifndef _JIKKEN_ENUMS_HPP_
 #define _JIKKEN_ENUMS_HPP_
 
+#include <cstdint>
+
 namespace Jikken
 {
+	typedef uint32_t BufferHandle;
+	typedef uint32_t ShaderHandle;
+
 	enum class BlendState
 	{
 		eSrcAlpha = 0,
@@ -72,7 +77,7 @@ namespace Jikken
 		eCompute
 	};
 
-	enum class ClearBufferFlags
+	enum ClearBufferFlags : uint32_t
 	{
 		eColor = 1,
 		eDepth = 2,

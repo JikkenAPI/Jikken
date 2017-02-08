@@ -25,4 +25,63 @@
 #ifndef _JIKKEN_COMMANDS_HPP_
 #define _JIKKEN_COMMANDS_HPP_
 
+#include "jikken/enums.hpp"
+
+namespace Jikken
+{
+	enum class CommandType
+	{
+		eAbstract = 0,
+		eSetShader,
+		eUpdateConstant,
+		eDraw,
+		eDrawInstance,
+		eClearBufferCommand
+	};
+
+	struct ICommand
+	{
+		ICommand();
+		CommandType commandType;
+	};
+
+	struct SetShaderCommand : public ICommand
+	{
+		SetShaderCommand();
+		ShaderHandle handle;
+	};
+
+	struct UpdateBufferCommand : public ICommand
+	{
+		UpdateBufferCommand();
+
+		BufferHandle buffer;
+		size_t offset;
+		size_t dataSize;
+		union
+		{
+			float *fData;
+			uint16_t *sData;
+		};
+	};
+
+	struct DrawCommand : public ICommand
+	{
+		DrawCommand();
+
+		PrimitiveType primitive;
+		uint32_t start;
+		uint32_t count;
+	};
+
+	struct DrawInstanceCommand : public ICommand
+	{
+		DrawInstanceCommand();
+
+		PrimitiveType primitive;
+		uint32_t start;
+		uint32_t count;
+		uint32_t instancedCount;
+	};
+}
 #endif

@@ -10,3 +10,4 @@ set (JIKKEN_SRC
 )
 
 add_library(Jikken STATIC ${JIKKEN_SRC})
+target_include_directories(Jikken PUBLIC include)
