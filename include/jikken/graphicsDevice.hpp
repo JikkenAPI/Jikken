@@ -33,6 +33,27 @@
 
 namespace Jikken
 {
+	enum VertexAttributeName : int32_t
+	{
+		ePOSITION = 0
+	};
+
+	enum VertexAttributeType : int32_t
+	{
+		eFLOAT = 0,
+		eUNSIGNED_INTEGER = 1,
+		eSIGNED_INTEGER = 2s
+	};
+
+	struct VertexInputLayout
+	{
+		VertexAttributeName attribute;
+		int32_t componentSize;
+		VertexAttributeType type;
+		uint32_t stride;
+		size_t offset;
+	};
+
 	struct ShaderDetails
 	{
 		std::string file;
@@ -47,6 +68,14 @@ namespace Jikken
 		virtual ShaderHandle createShader(const std::vector<ShaderDetails> &shaders) = 0;
 
 		virtual BufferHandle createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, float *data) = 0;
+
+		virtual LayoutHandle createVertexInputLayout(const std::vector<VertexInputLayout> &attributes) = 0;
+
+		virtual VertexArrayHandle createVertexArrayObject(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer = 0) = 0;
+
+		virtual void deleteVertexInputLayout(LayoutHandle handle) = 0;
+
+		virtual void deleteVertexArrayObject(VertexArrayHandle handle) = 0;
 
 		virtual void deleteBuffer(BufferHandle handle) = 0;
 
