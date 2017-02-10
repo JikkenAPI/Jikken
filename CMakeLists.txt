@@ -3,6 +3,7 @@ set (JIKKEN_SRC
 	include/jikken/commandQueue.hpp
 	include/jikken/enums.hpp
 	include/jikken/graphicsDevice.hpp
+	include/jikken/memory.hpp
 
 	src/commands.cpp
 	src/commandQueue.cpp

@@ -26,8 +26,7 @@
 #define _JIKKEN_MEMORY_HPP_
 
 #include <cstdint>
-
-// TODO: IMPLEMENT MEMORY PAGING.
+#include <vector>
 
 namespace Jikken
 {
@@ -40,14 +39,19 @@ namespace Jikken
 		PerFrameMemoryPool()
 		{
 			// Allocate a page of memory.
-			mMemory = new uint8_t[PAGE_SIZE];
+			mMemory.push_back(new uint8_t[PAGE_SIZE]);
 			mCurrentPtr = 0;
+			mCurrentPage = 0;
 		}
 
 		~PerFrameMemoryPool()
 		{
 			// Deallocate page
-			delete[] mMemory;
+			for (auto mem : mMemory)
+			{
+				delete[] mem;
+				mem = nullptr;
+			}
 		}
 
 		template<class T>
@@ -56,13 +60,15 @@ namespace Jikken
 			size_t size = sizeof(T);
 			if (size + mCurrentPtr >= PAGE_SIZE)
 			{
-				// We've run out of ram. For now, fail.
-				// TODO: alloc more.
-				assert(false);
-				abort();
+				// See if we already have a page allocated.
+				// If we do, we're golden. If not, just alloc another page!
+				mCurrentPage++;
+				if (mMemory.size() == mCurrentPage)
+					mMemory.push_back(new uint8_t[PAGE_SIZE]);
+				mCurrentPtr = 0;
 			}
 
-			T *obj = reinterpret_cast<T*>(mMemory + mCurrentPtr);
+			T *obj = reinterpret_cast<T*>(mMemory[mCurrentPage] + mCurrentPtr);
 			mCurrentPtr += size;
 
 			// Note the use of placement new. It doesn't do any
@@ -75,11 +81,13 @@ namespace Jikken
 		{
 			// Reset the stack.
 			mCurrentPtr = 0;
+			mCurrentPage = 0;
 		}
 
 	private:
-		uint8_t *mMemory;
+		std::vector<uint8_t *> mMemory;
 		uint32_t mCurrentPtr;
+		uint32_t mCurrentPage;
 	};
 }
 
