@@ -27,10 +27,11 @@
 
 #include "jikken/types.hpp"
 #include "jikken/enums.hpp"
+#include "jikken/memory.hpp"
 
 namespace Jikken
 {
-	enum class CommandType
+	enum CommandType : uint32_t
 	{
 		eAbstract = 0,
 		eSetShader,
@@ -47,8 +48,15 @@ namespace Jikken
 
 	struct ICommand
 	{
+		friend class CommandQueue;
+		friend class PerFrameMemoryPool;
+
 		ICommand();
 		CommandType commandType;
+
+		// Restrict next pointer only for memory management. Not API.
+	private:
+		ICommand *next;
 	};
 
 	struct SetShaderCommand : public ICommand

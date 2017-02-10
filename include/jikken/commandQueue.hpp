@@ -26,17 +26,44 @@
 #define _JIKKEN_COMMANDQUEUE_HPP_
 
 #include "jikken/commands.hpp"
+#include "jikken/memory.hpp"
 
 namespace Jikken
 {
 	class CommandQueue
 	{
+		friend class GraphicsDevice;
+	private:
+		CommandQueue()
+		{
+
+		}
+
+		~CommandQueue()
+		{
+
+		}
+
 	public:
-		CommandQueue();
-		~CommandQueue();
+		template<class T>
+		inline T* alloc()
+		{
+			return mMemory.malloc<T>();
+		}
+
+		inline ICommand* beginList()
+		{
+			return reinterpret_cast<ICommand*>(mMemory.getCommandQueuePtr());
+		}
+
+		inline void resetQueue()
+		{
+			mMemory.free();
+		}
 
 	private:
-
+		PerFrameMemoryPool mMemory;
+		ICommand *mCurrentPtr;
 	};
 }
 

@@ -38,7 +38,11 @@ namespace Jikken
 	class GraphicsDevice
 	{
 	public:
-		virtual ~GraphicsDevice() {}
+		virtual ~GraphicsDevice();
+
+		CommandQueue* createCommandQueue();
+
+		void deleteCommandQueue(CommandQueue *cmdQueue);
 
 		virtual ShaderHandle createShader(const std::vector<ShaderDetails> &shaders) = 0;
 
@@ -57,6 +61,13 @@ namespace Jikken
 		virtual void deleteBuffer(BufferHandle handle) = 0;
 
 		virtual void deleteShader(ShaderHandle handle) = 0;
+
+		virtual void submitCommandQueue();
+
+	protected:
+		std::vector<CommandQueue*> mCommandQueuePool;
+
+		std::vector<CommandQueue*> mActiveCommandQueues;
 	};
 }
 
