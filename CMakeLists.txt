@@ -20,8 +20,19 @@ if (JIKKEN_OPENGL)
 		${JIKKEN_SRC}
 		src/GL/GLGraphicsDevice.cpp
 		src/GL/GLGraphicsDevice.hpp
+		src/GL/GLUtil.cpp
+		src/GL/GLUtil.hpp
 	)
+	
+	add_library(GLEW STATIC thirdparty/glew/src/glew.c)
+	target_include_directories(GLEW PUBLIC thirdparty/glew/include)
+	target_compile_definitions(GLEW PUBLIC GLEW_STATIC)	
 endif()
 
 add_library(Jikken STATIC ${JIKKEN_SRC})
 target_include_directories(Jikken PUBLIC include)
+
+if (JIKKEN_OPENGL)
+	target_link_libraries(Jikken GLEW)
+	target_compile_definitions(Jikken PUBLIC GLEW_STATIC)
+endif()

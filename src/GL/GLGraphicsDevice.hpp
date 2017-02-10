@@ -25,12 +25,28 @@
 #ifndef _JIKKEN_GL_GLGRAPHICSDEVICE_HPP_
 #define _JIKKEN_GL_GLGRAPHICSDEVICE_HPP_
 
+#include <unordered_map>
+#include <GL/glew.h>
 #include "jikken/graphicsDevice.hpp"
 
 namespace Jikken
 {
 	class GLGraphicsDevice : public GraphicsDevice
 	{
+		struct GLBuffer
+		{
+			BufferType type;
+			GLuint buffer;
+		};
+
+		struct GLVAO
+		{
+			BufferHandle vbo;
+			BufferHandle ibo;
+			LayoutHandle layout;
+			GLuint vao;
+		};
+
 		GLGraphicsDevice();
 		virtual ~GLGraphicsDevice();
 
@@ -67,6 +83,20 @@ namespace Jikken
 		void _blendStateCmd(BlendStateCommand *cmd);
 		void _depthStencilStateCmd(DepthStencilStateCommand *cmd);
 		void _cullStateCmd(CullStateCommand *cmd);
+
+		std::unordered_map<BufferHandle, GLBuffer> mBufferToGL;
+		std::unordered_map<VertexArrayHandle, GLVAO> mVertexArrayToGL;
+		std::unordered_map<ShaderHandle, GLuint> mShaderToGL;
+		std::unordered_map<LayoutHandle, std::vector<VertexInputLayout>> mLayoutToGL;
+
+		BufferHandle mBufferHandle;
+		VertexArrayHandle mVertexArrayHandle;
+		ShaderHandle mShaderHandle;
+		LayoutHandle mLayoutHandle;
+
+		// GL needs a VAO bound for most functions.
+		// This will just make a global one.
+		GLuint mGlobalVAO;
 	};
 }
 

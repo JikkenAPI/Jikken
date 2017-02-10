@@ -22,18 +22,26 @@
 // SOFTWARE.
 //-----------------------------------------------------------------------------
 
+#include <cassert>
 #include "GLGraphicsDevice.hpp"
+#include "GLUtil.hpp"
 
 namespace Jikken
 {
 	GLGraphicsDevice::GLGraphicsDevice()
 	{
-	
+		mBufferHandle = 0;
+		mVertexArrayHandle = 0;
+		mShaderHandle = 0;
+		mLayoutHandle = 0;
+
+		glGenVertexArrays(1, &mGlobalVAO);
+		glBindVertexArray(mGlobalVAO);
 	}
 
 	GLGraphicsDevice::~GLGraphicsDevice()
 	{
-
+		glDeleteVertexArrays(1, &mGlobalVAO);
 	}
 
 	ShaderHandle GLGraphicsDevice::createShader(const std::vector<ShaderDetails> &shaders)
@@ -43,37 +51,93 @@ namespace Jikken
 
 	BufferHandle GLGraphicsDevice::createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, float *data)
 	{
+		BufferHandle handle = mBufferHandle++;
+		GLuint buffer;
 
+		glGenBuffers(1, &buffer);
+		glBindBuffer(bufferTypeToGL(type), buffer);
+		glBufferData(bufferTypeToGL(type), dataSize, data, bufferUsageHintToGL(hint));
+
+		mBufferToGL[handle] = { type, buffer };
+		return handle;
 	}
 
 	LayoutHandle GLGraphicsDevice::createVertexInputLayout(const std::vector<VertexInputLayout> &attributes)
 	{
-
+		// Since the VAO handles layout in GL, we just copy it and store it.
+		LayoutHandle layout = mLayoutHandle++;
+		for (const VertexInputLayout &attr : attributes)
+			mLayoutToGL[layout].push_back(attr);
+		return layout;
 	}
 
 	VertexArrayHandle GLGraphicsDevice::createVAO(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer = 0)
 	{
+#ifdef _DEBUG
+		if (mBufferToGL[vertexBuffer].type != BufferType::eVertexBuffer)
+			assert(false);
+		if (indexBuffer != 0 && mBufferToGL[indexBuffer].type != BufferType::eIndexBuffer)
+			assert(false);
+#endif
+		GLuint vao;
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+		{
+			// Bind Vertex Buffer
+			glBindBuffer(GL_ARRAY_BUFFER, mBufferToGL[vertexBuffer].buffer);
 
+			// Index buffer is optional. We can draw without index buffers in OpenGL.
+			if (indexBuffer > 0)
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mBufferToGL[indexBuffer].buffer);
+
+			// Bind input layout.
+			const std::vector<VertexInputLayout> &layouts = mLayoutToGL[layout];
+			for (const VertexInputLayout &attr : layouts)
+			{
+				glEnableVertexAttribArray(attr.attribute);
+				glVertexAttribPointer(
+					attr.attribute, 
+					attr.componentSize, 
+					layoutTypeToGL(attr.type), 
+					GL_FALSE, 
+					attr.stride, 
+					reinterpret_cast<void*>(attr.offset)
+				);
+			}
+		}
+		
+		VertexArrayHandle handle = mVertexArrayHandle++;
+		mVertexArrayToGL[handle] = { vertexBuffer, indexBuffer, layout, vao };
+		return handle;
 	}
 
 	void GLGraphicsDevice::bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, int32_t index)
 	{
-
+#ifdef _DEBUG
+		if (mBufferToGL[cBuffer].type != BufferType::eConstantBuffer)
+			assert(false);
+#endif
+		// Bind the uniform block to the shader program at index
+		glUniformBlockBinding(mShaderToGL[shader], index, mBufferToGL[cBuffer].buffer);
 	}
 
 	void GLGraphicsDevice::deleteVertexInputLayout(LayoutHandle handle)
 	{
-
+		// Nothing to delete in side GL, the handle object for us is just simply
+		// a vector of attributes since the VAO handles everything.
+		mLayoutToGL.erase(handle);
 	}
 
 	void GLGraphicsDevice::deleteVAO(VertexArrayHandle handle)
 	{
-
+		glDeleteVertexArrays(1, &mVertexArrayToGL[handle].vao);
+		mVertexArrayToGL.erase(handle);
 	}
 
 	void GLGraphicsDevice::deleteBuffer(BufferHandle handle)
 	{
-
+		glDeleteBuffers(1, &mBufferToGL[handle].buffer);
+		mBufferToGL.erase(handle);
 	}
 
 	void GLGraphicsDevice::deleteShader(ShaderHandle handle)
