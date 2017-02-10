@@ -50,6 +50,8 @@ namespace Jikken
 	{
 		friend class CommandQueue;
 		friend class PerFrameMemoryPool;
+		friend class GraphicsDevice;
+		friend class GLGraphicsDevice;
 
 		ICommand();
 		CommandType commandType;

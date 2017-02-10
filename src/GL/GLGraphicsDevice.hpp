@@ -22,51 +22,40 @@
 // SOFTWARE.
 //-----------------------------------------------------------------------------
 
-#ifndef _JIKKEN_GRAPHICSDEVICE_HPP_
-#define _JIKKEN_GRAPHICSDEVICE_HPP_
+#ifndef _JIKKEN_GL_GLGRAPHICSDEVICE_HPP_
+#define _JIKKEN_GL_GLGRAPHICSDEVICE_HPP_
 
-#include <vector>
-#include <string>
-#include "jikken/types.hpp"
-#include "jikken/enums.hpp"
-#include "jikken/structs.hpp"
-#include "jikken/commands.hpp"
-#include "jikken/commandQueue.hpp"
+#include "jikken/graphicsDevice.hpp"
 
 namespace Jikken
 {
-	class GraphicsDevice
+	class GLGraphicsDevice : public GraphicsDevice
 	{
-		friend class ICommand;
-	public:
-		virtual ~GraphicsDevice();
+		GLGraphicsDevice();
+		virtual ~GLGraphicsDevice();
 
-		CommandQueue* createCommandQueue();
+		virtual ShaderHandle createShader(const std::vector<ShaderDetails> &shaders) override;
 
-		void deleteCommandQueue(CommandQueue *cmdQueue);
+		virtual BufferHandle createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, float *data) override;
 
-		virtual ShaderHandle createShader(const std::vector<ShaderDetails> &shaders) = 0;
+		virtual LayoutHandle createVertexInputLayout(const std::vector<VertexInputLayout> &attributes) override;
 
-		virtual BufferHandle createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, float *data) = 0;
+		virtual VertexArrayHandle createVAO(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer = 0) override;
 
-		virtual LayoutHandle createVertexInputLayout(const std::vector<VertexInputLayout> &attributes) = 0;
+		virtual void bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, int32_t index) override;
 
-		virtual VertexArrayHandle createVAO(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer = 0) = 0;
+		virtual void deleteVertexInputLayout(LayoutHandle handle) override;
 
-		virtual void bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, int32_t index) = 0;
+		virtual void deleteVAO(VertexArrayHandle handle) override;
 
-		virtual void deleteVertexInputLayout(LayoutHandle handle) = 0;
+		virtual void deleteBuffer(BufferHandle handle) override;
 
-		virtual void deleteVAO(VertexArrayHandle handle) = 0;
+		virtual void deleteShader(ShaderHandle handle) override;
 
-		virtual void deleteBuffer(BufferHandle handle) = 0;
-
-		virtual void deleteShader(ShaderHandle handle) = 0;
-
-		virtual void submitCommandQueue() = 0;
+		virtual void submitCommandQueue() override;
 
 	protected:
-		std::vector<CommandQueue*> mCommandQueuePool;
+		void _processCmd(ICommand *cmd);
 	};
 }
 
