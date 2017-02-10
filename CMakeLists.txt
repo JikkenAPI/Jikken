@@ -4,6 +4,8 @@ set (JIKKEN_SRC
 	include/jikken/enums.hpp
 	include/jikken/graphicsDevice.hpp
 	include/jikken/memory.hpp
+	include/jikken/structs.hpp
+	include/jikken/types.hpp
 
 	src/commands.cpp
 	src/commandQueue.cpp

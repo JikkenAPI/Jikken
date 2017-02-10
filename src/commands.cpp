@@ -51,4 +51,14 @@ namespace Jikken
 	{
 		commandType = CommandType::eDrawInstance;
 	}
+
+	ClearBufferCommand::ClearBufferCommand()
+	{
+		commandType = CommandType::eClearBuffer;
+	}
+
+	BindVAOCommand::BindVAOCommand()
+	{
+		commandType = CommandType::eBindVAO;
+	}
 }

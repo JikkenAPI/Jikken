@@ -25,6 +25,7 @@
 #ifndef _JIKKEN_COMMANDS_HPP_
 #define _JIKKEN_COMMANDS_HPP_
 
+#include "jikken/types.hpp"
 #include "jikken/enums.hpp"
 
 namespace Jikken
@@ -36,7 +37,8 @@ namespace Jikken
 		eUpdateConstant,
 		eDraw,
 		eDrawInstance,
-		eClearBufferCommand
+		eClearBuffer,
+		eBindVAO
 	};
 
 	struct ICommand
@@ -82,6 +84,19 @@ namespace Jikken
 		uint32_t start;
 		uint32_t count;
 		uint32_t instancedCount;
+	};
+
+	struct ClearBufferCommand : public ICommand
+	{
+		ClearBufferCommand();
+		uint32_t flag;
+	};
+
+	struct BindVAOCommand : public ICommand
+	{
+		BindVAOCommand();
+
+		VertexArrayHandle vertexArray;
 	};
 }
 #endif

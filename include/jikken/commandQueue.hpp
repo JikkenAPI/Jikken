@@ -25,4 +25,19 @@
 #ifndef _JIKKEN_COMMANDQUEUE_HPP_
 #define _JIKKEN_COMMANDQUEUE_HPP_
 
+#include "jikken/commands.hpp"
+
+namespace Jikken
+{
+	class CommandQueue
+	{
+	public:
+		CommandQueue();
+		~CommandQueue();
+
+	private:
+
+	};
+}
+
 #endif

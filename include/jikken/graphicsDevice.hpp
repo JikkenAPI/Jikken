@@ -27,37 +27,14 @@
 
 #include <vector>
 #include <string>
+#include "jikken/types.hpp"
 #include "jikken/enums.hpp"
+#include "jikken/structs.hpp"
 #include "jikken/commands.hpp"
 #include "jikken/commandQueue.hpp"
 
 namespace Jikken
 {
-	enum VertexAttributeName : int32_t
-	{
-		ePOSITION = 0
-	};
-
-	enum VertexAttributeType : int32_t
-	{
-		eFLOAT = 0
-	};
-
-	struct VertexInputLayout
-	{
-		VertexAttributeName attribute;
-		int32_t componentSize;
-		VertexAttributeType type;
-		uint32_t stride;
-		size_t offset;
-	};
-
-	struct ShaderDetails
-	{
-		std::string file;
-		ShaderStage stage;
-	};
-
 	class GraphicsDevice
 	{
 	public:
@@ -69,11 +46,13 @@ namespace Jikken
 
 		virtual LayoutHandle createVertexInputLayout(const std::vector<VertexInputLayout> &attributes) = 0;
 
-		virtual VertexArrayHandle createVertexArrayObject(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer = 0) = 0;
+		virtual VertexArrayHandle createVAO(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer = 0) = 0;
+
+		virtual void bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, int32_t index) = 0;
 
 		virtual void deleteVertexInputLayout(LayoutHandle handle) = 0;
 
-		virtual void deleteVertexArrayObject(VertexArrayHandle handle) = 0;
+		virtual void deleteVAO(VertexArrayHandle handle) = 0;
 
 		virtual void deleteBuffer(BufferHandle handle) = 0;
 

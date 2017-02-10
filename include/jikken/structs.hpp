@@ -22,87 +22,27 @@
 // SOFTWARE.
 //-----------------------------------------------------------------------------
 
-#ifndef _JIKKEN_ENUMS_HPP_
-#define _JIKKEN_ENUMS_HPP_
+#ifndef _JIKKEN_STRUCTS_HPP_
+#define _JIKKEN_STRUCTS_HPP_
 
-#include <cstdint>
+#include <string>
+#include "jikken/enums.hpp"
 
 namespace Jikken
 {
-	enum class BlendState
+	struct VertexInputLayout
 	{
-		eSrcAlpha = 0,
-		eOneMinusSrcAlpha
+		VertexAttributeName attribute;
+		int32_t componentSize;
+		VertexAttributeType type;
+		uint32_t stride;
+		size_t offset;
 	};
 
-	enum class DepthFunc
+	struct ShaderDetails
 	{
-		eNever = 0,
-		eAlways,
-		eLess,
-		eEqual,
-		eGreater,
-		eLessEqual,
-		eGreaterEqual
-	};
-
-	enum class CullFaceState
-	{
-		eFront = 0,
-		eBack
-	};
-
-	enum class WindingOrderState
-	{
-		eCW = 0,
-		eCCW
-	};
-
-	enum class PrimitiveType
-	{
-		eTriangles = 0,
-		eTriangleStrip,
-		eLines,
-		eLineStrip
-	};
-
-	enum class ShaderStage
-	{
-		eVertex = 0,
-		eFragment,
-		eGeometry,
-		eCompute
-	};
-
-	enum ClearBufferFlags : uint32_t
-	{
-		eColor = 1,
-		eDepth = 2,
-		eStencil = 4
-	};
-
-	enum class BufferType
-	{
-		eVertexBuffer = 0,
-		eIndexBuffer,
-		eConstantBuffer
-	};
-
-	enum class BufferUsageHint
-	{
-		eStaticDraw = 0,
-		eDynamicDraw,
-		eStreamDraw
-	};
-
-	enum VertexAttributeName : int32_t
-	{
-		ePOSITION = 0
-	};
-
-	enum VertexAttributeType : int32_t
-	{
-		eFLOAT = 0
+		std::string file;
+		ShaderStage stage;
 	};
 }
 
