@@ -40,9 +40,7 @@ namespace Jikken
 
 	enum VertexAttributeType : int32_t
 	{
-		eFLOAT = 0,
-		eUNSIGNED_INTEGER = 1,
-		eSIGNED_INTEGER = 2s
+		eFLOAT = 0
 	};
 
 	struct VertexInputLayout
