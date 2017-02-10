@@ -34,7 +34,6 @@ namespace Jikken
 	SetShaderCommand::SetShaderCommand()
 	{
 		commandType = CommandType::eSetShader;
-		handle = 0;
 	}
 
 	UpdateBufferCommand::UpdateBufferCommand()
@@ -60,5 +59,25 @@ namespace Jikken
 	BindVAOCommand::BindVAOCommand()
 	{
 		commandType = CommandType::eBindVAO;
+	}
+
+	ViewportCommand::ViewportCommand()
+	{
+		commandType = CommandType::eViewport;
+	}
+
+	BlendStateCommand::BlendStateCommand()
+	{
+		commandType = CommandType::eBlendState;
+	}
+
+	DepthStencilStateCommand::DepthStencilStateCommand()
+	{
+		commandType = CommandType::eDepthStencilState;
+	}
+
+	CullStateCommand::CullStateCommand()
+	{
+		commandType = CommandType::eCullState;
 	}
 }

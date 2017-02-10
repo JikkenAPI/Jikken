@@ -38,7 +38,11 @@ namespace Jikken
 		eDraw,
 		eDrawInstance,
 		eClearBuffer,
-		eBindVAO
+		eBindVAO,
+		eViewport,
+		eBlendState,
+		eDepthStencilState,
+		eCullState
 	};
 
 	struct ICommand
@@ -97,6 +101,44 @@ namespace Jikken
 		BindVAOCommand();
 
 		VertexArrayHandle vertexArray;
+	};
+
+	struct ViewportCommand : public ICommand
+	{
+		ViewportCommand();
+
+		int32_t x;
+		int32_t y;
+		int32_t width;
+		int32_t height;
+	};
+
+	struct BlendStateCommand : public ICommand
+	{
+		BlendStateCommand();
+
+		bool enabled;
+		BlendState source;
+		BlendState dest;
+	};
+
+	// Right now, just depth. TODO: add stencil
+	struct DepthStencilStateCommand : public ICommand
+	{
+		DepthStencilStateCommand();
+
+		bool depthEnabled;
+		bool depthWrite;
+		DepthFunc depthFunc;
+	};
+
+	struct CullStateCommand : public ICommand
+	{
+		CullStateCommand();
+
+		bool enabled;
+		CullFaceState face;
+		WindingOrderState state;
 	};
 }
 #endif
