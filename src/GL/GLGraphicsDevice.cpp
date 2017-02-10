@@ -105,6 +105,8 @@ namespace Jikken
 				);
 			}
 		}
+		// Now bind global VAO. The above will now work for "vao"
+		glBindVertexArray(mGlobalVAO);
 		
 		VertexArrayHandle handle = mVertexArrayHandle++;
 		mVertexArrayToGL[handle] = { vertexBuffer, indexBuffer, layout, vao };
