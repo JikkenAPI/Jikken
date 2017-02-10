@@ -23,6 +23,7 @@
 //-----------------------------------------------------------------------------
 
 #include <cassert>
+#include <cstdlib>
 #include "GLGraphicsDevice.hpp"
 #include "GLUtil.hpp"
 
@@ -46,7 +47,87 @@ namespace Jikken
 
 	ShaderHandle GLGraphicsDevice::createShader(const std::vector<ShaderDetails> &shaders)
 	{
+		GLuint program;
+		std::vector<GLuint> shaderAttachments;
 
+		// Grab a GL attachment from each detail
+		for (const ShaderDetails &details : shaders)
+		{
+			FILE *file = fopen(details.file.c_str(), "r");
+			if (file == nullptr)
+			{
+				// TODO: Do something better than abort.
+				printf("Unable to open %s for reading! Aborting!", details.file.c_str());
+				abort();
+			}
+
+			// get file size
+			long fileSize;
+			fseek(file, 0, SEEK_END);
+			fileSize = ftell(file);
+			rewind(file);
+
+			// read into buffer
+			char *buffer = new char[fileSize + 1];
+			memset(buffer, 0, fileSize + 1);
+			fread(buffer, 1, static_cast<size_t>(fileSize), file);
+			fclose(file);
+
+			GLuint attachment = glCreateShader(shaderStageToGL(details.stage));
+			glShaderSource(attachment, 1, &buffer, 0);
+			glCompileShader(attachment);
+
+			// delete buffer
+			delete[] buffer;
+
+			// Check for errors in uploading and compiling the shader.
+			GLint success;
+			glGetShaderiv(attachment, GL_COMPILE_STATUS, &success);
+			if (!success)
+			{
+				// TODO: do something better than abort.
+				// TODO: query error log length.
+				const int LENGTH = 2048;
+				GLchar info[LENGTH];
+				glGetShaderInfoLog(attachment, LENGTH, &info);
+				printf("Shader %s compile error.\n", details.file.c_str());
+				printf(info);
+				abort();
+			}
+		}
+
+		// Create the program. A program is made up of one or more attachments.
+		// When we link it, we can then free attachments.
+		program = glCreateProgram();
+		for (GLuint attachment : shaderAttachments)
+			glAttachShader(program, attachment);
+		glLinkProgram(program);
+
+		// Check to see if the shader linked.
+		GLint linked;
+		glGetProgramiv(program, GL_LINK_STATUS, &linked);
+		if (!linked)
+		{
+			GLint length;
+			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
+			char *msg = new char[length + 1];
+			memset(msg, 0, length + 1);
+			glGetProgramInfoLog(program, length, &length, msg);
+			printf("Failed to link shader!\n");
+			printf(msg);
+			delete[] msg;
+
+			// TODO: come up with better error handling.
+			abort();
+		}
+
+		// Once it is linked, we can delete the attachments.
+		for (GLuint attachment : shaderAttachments)
+			glDeleteShader(attachment);
+
+		ShaderHandle handle = mShaderHandle++;
+		mShaderToGL[handle] = { program };
+		return handle;
 	}
 
 	BufferHandle GLGraphicsDevice::createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, float *data)
@@ -120,7 +201,7 @@ namespace Jikken
 			assert(false);
 #endif
 		// Bind the uniform block to the shader program at index
-		glUniformBlockBinding(mShaderToGL[shader], index, mBufferToGL[cBuffer].buffer);
+		glUniformBlockBinding(mShaderToGL[shader].program, index, mBufferToGL[cBuffer].buffer);
 	}
 
 	void GLGraphicsDevice::deleteVertexInputLayout(LayoutHandle handle)
@@ -144,7 +225,8 @@ namespace Jikken
 
 	void GLGraphicsDevice::deleteShader(ShaderHandle handle)
 	{
-
+		glDeleteProgram(mShaderToGL[handle].program);
+		mShaderToGL.erase(handle);
 	}
 
 	void GLGraphicsDevice::submitCommandQueue()

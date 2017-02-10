@@ -33,6 +33,7 @@ namespace Jikken
 	GLenum bufferUsageHintToGL(BufferUsageHint hint);
 	GLenum bufferTypeToGL(BufferType type);
 	GLenum layoutTypeToGL(VertexAttributeType type);
+	GLenum shaderStageToGL(ShaderStage stage);
 }
 
 #endif

@@ -60,4 +60,17 @@ namespace Jikken
 			return GL_FLOAT;
 		}
 	}
+
+	GLenum shaderStageToGL(ShaderStage stage)
+	{
+		switch (stage)
+		{
+		case ShaderStage::eVertex:
+			return GL_VERTEX_SHADER;
+		case ShaderStage::eFragment:
+			return GL_FRAGMENT_SHADER;
+		case ShaderStage::eGeometry:
+			return GL_GEOMETRY_SHADER;
+		}
+	}
 }

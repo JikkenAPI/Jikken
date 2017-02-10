@@ -47,6 +47,11 @@ namespace Jikken
 			GLuint vao;
 		};
 
+		struct GLShader
+		{
+			GLuint program;
+		};
+
 		GLGraphicsDevice();
 		virtual ~GLGraphicsDevice();
 
@@ -86,7 +91,7 @@ namespace Jikken
 
 		std::unordered_map<BufferHandle, GLBuffer> mBufferToGL;
 		std::unordered_map<VertexArrayHandle, GLVAO> mVertexArrayToGL;
-		std::unordered_map<ShaderHandle, GLuint> mShaderToGL;
+		std::unordered_map<ShaderHandle, GLShader> mShaderToGL;
 		std::unordered_map<LayoutHandle, std::vector<VertexInputLayout>> mLayoutToGL;
 
 		BufferHandle mBufferHandle;
