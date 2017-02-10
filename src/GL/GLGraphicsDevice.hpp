@@ -56,6 +56,17 @@ namespace Jikken
 
 	protected:
 		void _processCmd(ICommand *cmd);
+
+		void _setShaderCmd(SetShaderCommand *cmd);
+		void _updateBufferCmd(UpdateBufferCommand *cmd);
+		void _drawCmd(DrawCommand *cmd);
+		void _drawInstanceCmd(DrawInstanceCommand *cmd);
+		void _clearBufferCmd(ClearBufferCommand *cmd);
+		void _bindVAOCmd(BindVAOCommand *cmd);
+		void _viewportCmd(ViewportCommand *cmd);
+		void _blendStateCmd(BlendStateCommand *cmd);
+		void _depthStencilStateCmd(DepthStencilStateCommand *cmd);
+		void _cullStateCmd(CullStateCommand *cmd);
 	};
 }
 

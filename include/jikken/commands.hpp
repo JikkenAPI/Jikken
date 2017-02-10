@@ -35,7 +35,7 @@ namespace Jikken
 	{
 		eAbstract = 0,
 		eSetShader,
-		eUpdateConstant,
+		eUpdateBuffer,
 		eDraw,
 		eDrawInstance,
 		eClearBuffer,

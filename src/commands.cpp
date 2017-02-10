@@ -38,7 +38,7 @@ namespace Jikken
 
 	UpdateBufferCommand::UpdateBufferCommand()
 	{
-		commandType = CommandType::eUpdateConstant;
+		commandType = CommandType::eUpdateBuffer;
 	}
 
 	DrawCommand::DrawCommand()

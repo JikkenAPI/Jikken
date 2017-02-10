@@ -97,25 +97,88 @@ namespace Jikken
 		switch (cmd->commandType)
 		{
 		case CommandType::eSetShader:
+			_setShaderCmd(static_cast<SetShaderCommand*>(cmd));
 			break;
-		case CommandType::eUpdateConstant:
+		case CommandType::eUpdateBuffer:
+			_updateBufferCmd(static_cast<UpdateBufferCommand*>(cmd));
 			break;
 		case CommandType::eDraw:
+			_drawCmd(static_cast<DrawCommand*>(cmd));
 			break;
 		case CommandType::eDrawInstance:
+			_drawInstanceCmd(static_cast<DrawInstanceCommand*>(cmd));
 			break;
 		case CommandType::eClearBuffer:
+			_clearBufferCmd(static_cast<ClearBufferCommand*>(cmd));
 			break;
 		case CommandType::eBindVAO:
+			_bindVAOCmd(static_cast<BindVAOCommand*>(cmd));
 			break;
 		case CommandType::eViewport:
+			_viewportCmd(static_cast<ViewportCommand*>(cmd));
 			break;
 		case CommandType::eBlendState:
+			_blendStateCmd(static_cast<BlendStateCommand*>(cmd));
 			break;
 		case CommandType::eDepthStencilState:
+			_depthStencilStateCmd(static_cast<DepthStencilStateCommand*>(cmd));
 			break;
 		case CommandType::eCullState:
+			_cullStateCmd(static_cast<CullStateCommand*>(cmd));
+			break;
+		default:
+			printf("Invalid command to process in GLGraphicsDevice: %i", cmd->commandType);
 			break;
 		}
+	}
+
+	void GLGraphicsDevice::_setShaderCmd(SetShaderCommand *cmd)
+	{
+
+	}
+
+	void GLGraphicsDevice::_updateBufferCmd(UpdateBufferCommand *cmd)
+	{
+
+	}
+
+	void GLGraphicsDevice::_drawCmd(DrawCommand *cmd)
+	{
+
+	}
+
+	void GLGraphicsDevice::_drawInstanceCmd(DrawInstanceCommand *cmd)
+	{
+
+	}
+
+	void GLGraphicsDevice::_clearBufferCmd(ClearBufferCommand *cmd)
+	{
+
+	}
+
+	void GLGraphicsDevice::_bindVAOCmd(BindVAOCommand *cmd)
+	{
+
+	}
+
+	void GLGraphicsDevice::_viewportCmd(ViewportCommand *cmd)
+	{
+
+	}
+
+	void GLGraphicsDevice::_blendStateCmd(BlendStateCommand *cmd)
+	{
+
+	}
+
+	void GLGraphicsDevice::_depthStencilStateCmd(DepthStencilStateCommand *cmd)
+	{
+
+	}
+
+	void GLGraphicsDevice::_cullStateCmd(CullStateCommand *cmd)
+	{
+
 	}
 }
