@@ -34,6 +34,9 @@ namespace Jikken
 	GLenum bufferTypeToGL(BufferType type);
 	GLenum layoutTypeToGL(VertexAttributeType type);
 	GLenum shaderStageToGL(ShaderStage stage);
+	GLenum drawPrimitiveToGL(PrimitiveType type);
+	GLenum blendStateToGL(BlendState state);
+	GLenum depthFuncToGL(DepthFunc func);
 }
 
 #endif

@@ -35,6 +35,11 @@ namespace Jikken
 		mVertexArrayHandle = 0;
 		mShaderHandle = 0;
 		mLayoutHandle = 0;
+		mCurrentVAO = 0;
+
+		mStateCache.blend.firstSet = true;
+		mStateCache.depthStencil.firstSet = true;
+		mStateCache.cull.firstSet = true;
 
 		glGenVertexArrays(1, &mGlobalVAO);
 		glBindVertexArray(mGlobalVAO);
@@ -89,7 +94,7 @@ namespace Jikken
 				// TODO: query error log length.
 				const int LENGTH = 2048;
 				GLchar info[LENGTH];
-				glGetShaderInfoLog(attachment, LENGTH, &info);
+				glGetShaderInfoLog(attachment, LENGTH, 0, info);
 				printf("Shader %s compile error.\n", details.file.c_str());
 				printf(info);
 				abort();
@@ -282,51 +287,161 @@ namespace Jikken
 
 	void GLGraphicsDevice::_setShaderCmd(SetShaderCommand *cmd)
 	{
-
+		glUseProgram(mShaderToGL[cmd->handle].program);
 	}
 
 	void GLGraphicsDevice::_updateBufferCmd(UpdateBufferCommand *cmd)
 	{
-
+		GLBuffer buffer = mBufferToGL[cmd->buffer];
+		glBindBuffer(bufferTypeToGL(buffer.type), buffer.buffer);
+		glBufferSubData(bufferTypeToGL(buffer.type), cmd->offset, cmd->dataSize, cmd->data);
 	}
 
 	void GLGraphicsDevice::_drawCmd(DrawCommand *cmd)
 	{
+		GLenum primitive = drawPrimitiveToGL(cmd->primitive);
 
+		// Check if we are using indexed drawing.
+		if (mVertexArrayToGL[mCurrentVAO].ibo == 0)
+			glDrawArrays(primitive, cmd->start, cmd->count);
+		else
+			glDrawElements(primitive, cmd->count, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(cmd->start));
 	}
 
 	void GLGraphicsDevice::_drawInstanceCmd(DrawInstanceCommand *cmd)
 	{
+		GLenum primitive = drawPrimitiveToGL(cmd->primitive);
 
+		// Check if we are using indexed drawing.
+		if (mVertexArrayToGL[mCurrentVAO].ibo == 0)
+			glDrawArraysInstanced(primitive, cmd->start, cmd->count, cmd->instancedCount);
+		else
+			glDrawElementsInstanced(primitive, cmd->count, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(cmd->start), cmd->instancedCount);
 	}
 
 	void GLGraphicsDevice::_clearBufferCmd(ClearBufferCommand *cmd)
 	{
-
+		uint32_t flag = 0x0;
+		if (cmd->flag & ClearBufferFlags::eColor)
+			flag |= GL_COLOR_BUFFER_BIT;
+		if (cmd->flag & ClearBufferFlags::eDepth)
+			flag |= GL_DEPTH_BUFFER_BIT;
+		if (cmd->flag & ClearBufferFlags::eStencil)
+			flag |= GL_STENCIL_BUFFER_BIT;
+		glClear(flag);
 	}
 
 	void GLGraphicsDevice::_bindVAOCmd(BindVAOCommand *cmd)
 	{
-
+		mCurrentVAO = cmd->vertexArray;
+		const GLVAO &vao = mVertexArrayToGL[mCurrentVAO];
+		glBindVertexArray(vao.vao);
 	}
 
 	void GLGraphicsDevice::_viewportCmd(ViewportCommand *cmd)
 	{
-
+		glViewport(cmd->x, cmd->y, cmd->width, cmd->height);
 	}
 
 	void GLGraphicsDevice::_blendStateCmd(BlendStateCommand *cmd)
 	{
+		// If this is the first time we are setting the state block,
+		// update everything.
+		bool first = mStateCache.blend.firstSet;
 
+		// First toggle blending.
+		if (first || cmd->enabled != mStateCache.blend.blendStateEnabled)
+		{
+			if (cmd->enabled)
+				glEnable(GL_BLEND);
+			else
+				glDisable(GL_BLEND);
+			mStateCache.blend.blendStateEnabled = cmd->enabled;
+		}
+
+		// Next update the kind of blending we want to perform.
+		if (first || (cmd->source != mStateCache.blend.source || cmd->dest != mStateCache.blend.dest))
+		{
+			glBlendFunc(blendStateToGL(cmd->source), blendStateToGL(cmd->dest));
+			mStateCache.blend.source = cmd->source;
+			mStateCache.blend.dest = cmd->dest;
+		}
+
+		// We've set it at least once.
+		mStateCache.blend.firstSet = false;
 	}
 
 	void GLGraphicsDevice::_depthStencilStateCmd(DepthStencilStateCommand *cmd)
 	{
+		// If this is the first time we are setting the state block,
+		// update everything.
+		bool first = mStateCache.depthStencil.firstSet;
 
+		// Enables/Disables depth test.
+		if (first || (cmd->depthEnabled != mStateCache.depthStencil.depthEnabled))
+		{
+			if (cmd->depthEnabled)
+				glEnable(GL_DEPTH_TEST);
+			else
+				glDisable(GL_DEPTH_TEST);
+			mStateCache.depthStencil.depthEnabled = cmd->depthEnabled;
+		}
+
+		// Enables/Disables writing to the depth buffer.
+		if (first || (cmd->depthWrite != mStateCache.depthStencil.depthWrite))
+		{
+			glDepthMask(cmd->depthWrite);
+			mStateCache.depthStencil.depthWrite = cmd->depthWrite;
+		}
+
+		// Sets depth function.
+		if (first || (cmd->depthFunc != mStateCache.depthStencil.depthFunc))
+		{
+			glDepthFunc(depthFuncToGL(cmd->depthFunc));
+			mStateCache.depthStencil.depthFunc = cmd->depthFunc;
+		}
+
+		// We've set it at least once.
+		mStateCache.depthStencil.firstSet = false;
 	}
 
 	void GLGraphicsDevice::_cullStateCmd(CullStateCommand *cmd)
 	{
+		// If this is the first time we are setting the state block,
+		// update everything.
+		bool first = mStateCache.cull.firstSet;
 
+		// Enables/Disables face culling
+		if (first || (cmd->enabled != mStateCache.cull.enabled))
+		{
+			if (cmd->enabled)
+				glEnable(GL_CULL_FACE);
+			else
+				glDisable(GL_CULL_FACE);
+			mStateCache.cull.enabled = cmd->enabled;
+		}
+
+		// Sets which face to cull
+		if (first || (cmd->face != mStateCache.cull.face))
+		{
+			if (cmd->face == CullFaceState::eBack)
+				glCullFace(GL_BACK);
+			else
+				glCullFace(GL_FRONT);
+			mStateCache.cull.face = cmd->face;
+		}
+
+		// Winding order
+		if (first || (cmd->state != mStateCache.cull.state))
+		{
+			if (cmd->state == WindingOrderState::eCCW)
+				glFrontFace(GL_CCW);
+			else
+				glFrontFace(GL_CW);
+			mStateCache.cull.state = cmd->state;
+		}
+
+		// We've set it at least once.
+		mStateCache.cull.firstSet = false;
 	}
 }

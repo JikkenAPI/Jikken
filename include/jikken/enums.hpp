@@ -41,6 +41,7 @@ namespace Jikken
 		eAlways,
 		eLess,
 		eEqual,
+		eNotEqual,
 		eGreater,
 		eLessEqual,
 		eGreaterEqual

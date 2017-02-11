@@ -102,6 +102,38 @@ namespace Jikken
 		// GL needs a VAO bound for most functions.
 		// This will just make a global one.
 		GLuint mGlobalVAO;
+
+		VertexArrayHandle mCurrentVAO;
+
+		struct StateCache
+		{
+			struct
+			{
+				bool firstSet;
+
+				bool blendStateEnabled;
+				BlendState source;
+				BlendState dest;
+			} blend;
+
+			struct
+			{
+				bool firstSet;
+
+				bool depthEnabled;
+				bool depthWrite;
+				DepthFunc depthFunc;
+			} depthStencil;
+
+			struct
+			{
+				bool firstSet;
+
+				bool enabled;
+				CullFaceState face;
+				WindingOrderState state;
+			} cull;
+		} mStateCache;
 	};
 }
 

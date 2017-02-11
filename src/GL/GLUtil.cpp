@@ -73,4 +73,53 @@ namespace Jikken
 			return GL_GEOMETRY_SHADER;
 		}
 	}
+
+	GLenum drawPrimitiveToGL(PrimitiveType type)
+	{
+		switch (type)
+		{
+		case PrimitiveType::eTriangles:
+			return GL_TRIANGLES;
+		case PrimitiveType::eTriangleStrip:
+			return GL_TRIANGLE_STRIP;
+		case PrimitiveType::eLines:
+			return GL_LINES;
+		case PrimitiveType::eLineStrip:
+			return GL_LINE_STRIP;
+		}
+	}
+
+	GLenum blendStateToGL(BlendState state)
+	{
+		switch (state)
+		{
+		case BlendState::eSrcAlpha:
+			return GL_SRC_ALPHA;
+		case BlendState::eOneMinusSrcAlpha:
+			return GL_ONE_MINUS_SRC_ALPHA;
+		}
+	}
+
+	GLenum depthFuncToGL(DepthFunc func)
+	{
+		switch (func)
+		{
+		case DepthFunc::eAlways:
+			return GL_ALWAYS;
+		case DepthFunc::eEqual:
+			return GL_EQUAL;
+		case DepthFunc::eGreater:
+			return GL_GREATER;
+		case DepthFunc::eGreaterEqual:
+			return GL_GEQUAL;
+		case DepthFunc::eLess:
+			return GL_LESS;
+		case DepthFunc::eLessEqual:
+			return GL_LEQUAL;
+		case DepthFunc::eNever:
+			return GL_NEVER;
+		case DepthFunc::eNotEqual:
+			return GL_NOTEQUAL;
+		}
+	}
 }

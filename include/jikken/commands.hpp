@@ -78,6 +78,7 @@ namespace Jikken
 		{
 			float *fData;
 			uint16_t *sData;
+			void *data;
 		};
 	};
 
