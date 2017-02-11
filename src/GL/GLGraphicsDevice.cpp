@@ -234,15 +234,12 @@ namespace Jikken
 		mShaderToGL.erase(handle);
 	}
 
-	void GLGraphicsDevice::submitCommandQueue()
+	void GLGraphicsDevice::submitCommandQueue(CommandQueue *cmdQueue)
 	{
-		for (CommandQueue *cmdQueue : mCommandQueuePool)
-		{
-			// Process all commands and then clear the queue so it can be filled again.
-			for (ICommand *cmd = cmdQueue->beginList(); cmd != nullptr; cmd = cmd->next)
-				_processCmd(cmd);
-			cmdQueue->resetQueue();
-		}
+		// Process all commands and then clear the queue so it can be filled again.
+		for (ICommand *cmd = cmdQueue->beginList(); cmd != nullptr; cmd = cmd->next)
+			_processCmd(cmd);
+		cmdQueue->resetQueue();
 	}
 
 	void GLGraphicsDevice::_processCmd(ICommand *cmd)

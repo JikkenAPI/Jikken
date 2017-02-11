@@ -73,7 +73,7 @@ namespace Jikken
 
 		virtual void deleteShader(ShaderHandle handle) override;
 
-		virtual void submitCommandQueue() override;
+		virtual void submitCommandQueue(CommandQueue *queue) override;
 
 	protected:
 		void _processCmd(ICommand *cmd);

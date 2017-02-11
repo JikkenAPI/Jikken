@@ -63,7 +63,7 @@ namespace Jikken
 
 		virtual void deleteShader(ShaderHandle handle) = 0;
 
-		virtual void submitCommandQueue() = 0;
+		virtual void submitCommandQueue(CommandQueue *queue) = 0;
 
 	protected:
 		std::vector<CommandQueue*> mCommandQueuePool;
