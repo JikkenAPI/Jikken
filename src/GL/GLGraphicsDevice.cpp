@@ -157,7 +157,7 @@ namespace Jikken
 		return layout;
 	}
 
-	VertexArrayHandle GLGraphicsDevice::createVAO(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer = 0)
+	VertexArrayHandle GLGraphicsDevice::createVAO(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer)
 	{
 #ifdef _DEBUG
 		if (mBufferToGL[vertexBuffer].type != BufferType::eVertexBuffer)
@@ -300,9 +300,21 @@ namespace Jikken
 
 		// Check if we are using indexed drawing.
 		if (mVertexArrayToGL[mCurrentVAO].ibo == 0)
+		{
 			glDrawArrays(primitive, cmd->start, cmd->count);
+		}
 		else
+		{
+#ifdef _MSC_VER
+// warning C4312: 'reinterpret_cast': conversion from 'uint32_t' to 'void *' of greater size
+#pragma warning(push)
+#pragma warning(disable : 4312)
+#endif
 			glDrawElements(primitive, cmd->count, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(cmd->start));
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+		}
 	}
 
 	void GLGraphicsDevice::_drawInstanceCmd(DrawInstanceCommand *cmd)
@@ -311,9 +323,21 @@ namespace Jikken
 
 		// Check if we are using indexed drawing.
 		if (mVertexArrayToGL[mCurrentVAO].ibo == 0)
+		{
 			glDrawArraysInstanced(primitive, cmd->start, cmd->count, cmd->instancedCount);
+		}
 		else
+		{
+#ifdef _MSC_VER
+// warning C4312: 'reinterpret_cast': conversion from 'uint32_t' to 'void *' of greater size
+#pragma warning(push)
+#pragma warning(disable : 4312)
+#endif
 			glDrawElementsInstanced(primitive, cmd->count, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(cmd->start), cmd->instancedCount);
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif		
+		}
 	}
 
 	void GLGraphicsDevice::_clearBufferCmd(ClearBufferCommand *cmd)

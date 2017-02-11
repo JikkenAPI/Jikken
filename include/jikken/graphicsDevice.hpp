@@ -37,7 +37,7 @@ namespace Jikken
 {
 	class GraphicsDevice
 	{
-		friend class ICommand;
+		friend struct ICommand;
 	public:
 		virtual ~GraphicsDevice();
 

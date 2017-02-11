@@ -54,7 +54,7 @@ target_include_directories(Jikken PUBLIC include src)
 
 if (JIKKEN_OPENGL)
 	target_link_libraries(Jikken GLEW)
-	target_compile_definitions(Jikken PUBLIC GLEW_STATIC)
+	target_compile_definitions(Jikken PUBLIC GLEW_STATIC _CRT_SECURE_NO_WARNINGS)
 
 	# Platform specific OpenGL libraries
 	if (WIN32)
