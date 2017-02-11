@@ -51,7 +51,7 @@ namespace Jikken
 		{
 			GLuint program;
 		};
-
+	public:
 		GLGraphicsDevice();
 		virtual ~GLGraphicsDevice();
 

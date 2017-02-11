@@ -22,95 +22,44 @@
 // SOFTWARE.
 //-----------------------------------------------------------------------------
 
-#ifndef _JIKKEN_ENUMS_HPP_
-#define _JIKKEN_ENUMS_HPP_
+#include <cassert>
+#include "jikken/jikken.hpp"
 
-#include <cstdint>
+#ifdef JIKKEN_OPENGL
+#include "GL/GLGraphicsDevice.hpp"
+#endif
+#ifdef JIKKEN_VULKAN
+#include "vulkan/VulkanGraphicsDevice.hpp"
+#endif
 
 namespace Jikken
 {
-	enum class API
+	GraphicsDevice* createGraphicsDevice(API api)
 	{
-		eOpenGL,
-		eVulkan
-	};
-
-	enum class BlendState
-	{
-		eSrcAlpha = 0,
-		eOneMinusSrcAlpha
-	};
-
-	enum class DepthFunc
-	{
-		eNever = 0,
-		eAlways,
-		eLess,
-		eEqual,
-		eNotEqual,
-		eGreater,
-		eLessEqual,
-		eGreaterEqual
-	};
-
-	enum class CullFaceState
-	{
-		eFront = 0,
-		eBack
-	};
-
-	enum class WindingOrderState
-	{
-		eCW = 0,
-		eCCW
-	};
-
-	enum class PrimitiveType
-	{
-		eTriangles = 0,
-		eTriangleStrip,
-		eLines,
-		eLineStrip
-	};
-
-	enum class ShaderStage
-	{
-		eVertex = 0,
-		eFragment,
-		eGeometry,
-		eCompute
-	};
-
-	enum ClearBufferFlags : uint32_t
-	{
-		eColor = 1,
-		eDepth = 2,
-		eStencil = 4
-	};
-
-	enum class BufferType
-	{
-		eVertexBuffer = 0,
-		eIndexBuffer,
-		eConstantBuffer
-	};
-
-	enum class BufferUsageHint
-	{
-		eStaticDraw = 0,
-		eDynamicDraw,
-		eStreamDraw
-	};
-
-	enum VertexAttributeName : int32_t
-	{
-		ePOSITION = 0
-	};
-
-	enum VertexAttributeType : int32_t
-	{
-		eFLOAT = 0
-	};
-}
-
+		if (api == API::eOpenGL)
+		{
+#ifdef JIKKEN_OPENGL
+			return new GLGraphicsDevice();
+#else
+			assert(false);
+			return nullptr;
 #endif
+		}
+		else if (api == API::eVulkan)
+		{
+#ifdef JIKKEN_VULKAN
+			return new VulkanGraphicsDevice();
+#else
+			assert(false);
+			return nullptr;
+#endif
+		}
+		return nullptr;
+	}
+
+	void destroyGraphicsDevice(GraphicsDevice *device)
+	{
+		delete device;
+		device = nullptr;
+	}
+}

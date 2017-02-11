@@ -5,6 +5,7 @@ set (JIKKEN_SRC
 	include/jikken/commandQueue.hpp
 	include/jikken/enums.hpp
 	include/jikken/graphicsDevice.hpp
+	include/jikken/jikken.hpp
 	include/jikken/memory.hpp
 	include/jikken/structs.hpp
 	include/jikken/types.hpp
@@ -12,6 +13,7 @@ set (JIKKEN_SRC
 	src/commands.cpp
 	src/commandQueue.cpp
 	src/graphicsDevice.cpp
+	src/jikken.cpp
 )
 
 # OpenGL Support is enabled by default.
@@ -54,12 +56,18 @@ target_include_directories(Jikken PUBLIC include src)
 
 if (JIKKEN_OPENGL)
 	target_link_libraries(Jikken GLEW)
-	target_compile_definitions(Jikken PUBLIC GLEW_STATIC _CRT_SECURE_NO_WARNINGS)
+	target_compile_definitions(Jikken PUBLIC GLEW_STATIC _CRT_SECURE_NO_WARNINGS JIKKEN_OPENGL)
 
 	# Platform specific OpenGL libraries
 	if (WIN32)
 		target_link_libraries(Jikken OpenGL32)
+	elseif(APPLE)
+		target_link_libraries(Jikken "-framework OpenGL")
 	else()
 		message("Implement OpenGL linkage for your platform!")
 	endif()
+endif()
+
+if (JIKKEN_VULKAN)
+	target_compile_definitions(Jikken PUBLILC JIKKEN_VULKAN)
 endif()

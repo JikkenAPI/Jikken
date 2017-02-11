@@ -22,95 +22,16 @@
 // SOFTWARE.
 //-----------------------------------------------------------------------------
 
-#ifndef _JIKKEN_ENUMS_HPP_
-#define _JIKKEN_ENUMS_HPP_
+#ifndef _JIKKEN_JIKKEN_HPP_
+#define _JIKKEN_JIKKEN_HPP_
 
-#include <cstdint>
+#include "jikken/enums.hpp"
+#include "jikken/graphicsDevice.hpp"
 
 namespace Jikken
 {
-	enum class API
-	{
-		eOpenGL,
-		eVulkan
-	};
-
-	enum class BlendState
-	{
-		eSrcAlpha = 0,
-		eOneMinusSrcAlpha
-	};
-
-	enum class DepthFunc
-	{
-		eNever = 0,
-		eAlways,
-		eLess,
-		eEqual,
-		eNotEqual,
-		eGreater,
-		eLessEqual,
-		eGreaterEqual
-	};
-
-	enum class CullFaceState
-	{
-		eFront = 0,
-		eBack
-	};
-
-	enum class WindingOrderState
-	{
-		eCW = 0,
-		eCCW
-	};
-
-	enum class PrimitiveType
-	{
-		eTriangles = 0,
-		eTriangleStrip,
-		eLines,
-		eLineStrip
-	};
-
-	enum class ShaderStage
-	{
-		eVertex = 0,
-		eFragment,
-		eGeometry,
-		eCompute
-	};
-
-	enum ClearBufferFlags : uint32_t
-	{
-		eColor = 1,
-		eDepth = 2,
-		eStencil = 4
-	};
-
-	enum class BufferType
-	{
-		eVertexBuffer = 0,
-		eIndexBuffer,
-		eConstantBuffer
-	};
-
-	enum class BufferUsageHint
-	{
-		eStaticDraw = 0,
-		eDynamicDraw,
-		eStreamDraw
-	};
-
-	enum VertexAttributeName : int32_t
-	{
-		ePOSITION = 0
-	};
-
-	enum VertexAttributeType : int32_t
-	{
-		eFLOAT = 0
-	};
+	GraphicsDevice* createGraphicsDevice(API api);
+	void destroyGraphicsDevice(GraphicsDevice *device);
 }
 
 #endif
