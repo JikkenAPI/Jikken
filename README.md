@@ -21,6 +21,7 @@ You need a copy of CMake and a C++11 compiler.
 - D3D11
 - WebGL 2.0
 - OpenGLES 3.x
+- OpenGL 4.3+
 
 ### License
 
