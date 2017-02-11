@@ -24,8 +24,8 @@
 
 #include <cassert>
 #include <cstdlib>
-#include "GLGraphicsDevice.hpp"
-#include "GLUtil.hpp"
+#include "GL/GLGraphicsDevice.hpp"
+#include "GL/GLUtil.hpp"
 
 namespace Jikken
 {

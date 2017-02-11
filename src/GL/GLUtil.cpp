@@ -22,7 +22,7 @@
 // SOFTWARE.
 //-----------------------------------------------------------------------------
 
-#include "GLUtil.hpp"
+#include "GL/GLUtil.hpp"
 
 namespace Jikken
 {
