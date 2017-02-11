@@ -27,7 +27,7 @@
 
 #include <cstdint>
 
-namespace
+namespace Jikken
 {
 	typedef uint32_t BufferHandle;
 	typedef uint32_t ShaderHandle;
