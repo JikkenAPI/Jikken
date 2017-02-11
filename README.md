@@ -16,12 +16,14 @@ A modern abstract 3D rendering API that serves as the API for OpenBlockCraft.
 
 You need a copy of CMake and a C++11 compiler.
 
-### Other Potential APIs
+### Other Potential APIs (No Guarantee, No Particular Order)
 
 - D3D11
 - WebGL 2.0
-- OpenGLES 3.x
+- OpenGLES 3.0+
 - OpenGL 4.3+
+- Metal
+- D3D12
 
 ### License
 
