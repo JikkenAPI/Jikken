@@ -14,7 +14,17 @@ set (JIKKEN_SRC
 	src/graphicsDevice.cpp
 )
 
+# OpenGL Support is enabled by default.
 option(JIKKEN_OPENGL "Use OpenGL rendering." ON)
+
+# Vulkan Support
+if (APPLE)
+	# Apple does not have Vulkan at this time.
+	set(JIKKEN_VULKAN OFF)
+else()
+	option(JIKKEN_VULKAN "Use Vulkan rendering." OFF)
+endif()
+
 if (JIKKEN_OPENGL)
 	set (JIKKEN_SRC
 		${JIKKEN_SRC}
@@ -29,10 +39,27 @@ if (JIKKEN_OPENGL)
 	target_compile_definitions(GLEW PUBLIC GLEW_STATIC)	
 endif()
 
+if (JIKKEN_VULKAN)
+	set (JIKKEN_SRC
+		${JIKKEN_SRC}
+		src/vulkan/VulkanGraphicsDevice.cpp
+		src/vulkan/VulkanGraphicsDevice.hpp
+		src/vulkan/VulkanUtil.cpp
+		src/vulkan/VulkanUtil.hpp
+	)
+endif()
+
 add_library(Jikken STATIC ${JIKKEN_SRC})
-target_include_directories(Jikken PUBLIC include)
+target_include_directories(Jikken PUBLIC include src)
 
 if (JIKKEN_OPENGL)
 	target_link_libraries(Jikken GLEW)
 	target_compile_definitions(Jikken PUBLIC GLEW_STATIC)
+
+	# Platform specific OpenGL libraries
+	if (WIN32)
+		target_link_libraries(Jikken OpenGL32)
+	else()
+		message("Implement OpenGL linkage for your platform!")
+	endif()
 endif()
