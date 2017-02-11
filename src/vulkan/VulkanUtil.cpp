@@ -25,5 +25,5 @@
 #include "vulkan/vulkanUtil.hpp"
 
 namespace Jikken
-{	
+{
 }

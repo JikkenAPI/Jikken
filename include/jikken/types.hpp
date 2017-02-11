@@ -34,7 +34,7 @@ namespace
 	typedef uint32_t LayoutHandle;
 	typedef uint32_t VertexArrayHandle;
 
-   const uint32_t InvalidHandle = 0xffffffff;
+	const uint32_t InvalidHandle = 0xffffffff;
 }
 
 #endif

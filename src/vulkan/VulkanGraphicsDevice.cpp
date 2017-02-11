@@ -29,60 +29,60 @@
 
 namespace Jikken
 {
-   VulkanGraphicsDevice::VulkanGraphicsDevice() : 
-      mInstance(VK_NULL_HANDLE),
-      mPhysicalDevice(VK_NULL_HANDLE),
-      mDevice(VK_NULL_HANDLE),
-      mDebugCallback(VK_NULL_HANDLE),
-      mAllocCallback(nullptr)
-   {
-   }
+	VulkanGraphicsDevice::VulkanGraphicsDevice() :
+		mInstance(VK_NULL_HANDLE),
+		mPhysicalDevice(VK_NULL_HANDLE),
+		mDevice(VK_NULL_HANDLE),
+		mDebugCallback(VK_NULL_HANDLE),
+		mAllocCallback(nullptr)
+	{
+	}
 
-   VulkanGraphicsDevice::~VulkanGraphicsDevice()
-   {
-   }
+	VulkanGraphicsDevice::~VulkanGraphicsDevice()
+	{
+	}
 
-   ShaderHandle VulkanGraphicsDevice::createShader(const std::vector<ShaderDetails> &shaders)
-   {
-      return InvalidHandle;
-   }
+	ShaderHandle VulkanGraphicsDevice::createShader(const std::vector<ShaderDetails> &shaders)
+	{
+		return InvalidHandle;
+	}
 
-   BufferHandle VulkanGraphicsDevice::createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, float *data)
-   {
-      return InvalidHandle;
-   }
+	BufferHandle VulkanGraphicsDevice::createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, float *data)
+	{
+		return InvalidHandle;
+	}
 
-   LayoutHandle VulkanGraphicsDevice::createVertexInputLayout(const std::vector<VertexInputLayout> &attributes)
-   {
-      return InvalidHandle;
-   }
+	LayoutHandle VulkanGraphicsDevice::createVertexInputLayout(const std::vector<VertexInputLayout> &attributes)
+	{
+		return InvalidHandle;
+	}
 
-   VertexArrayHandle VulkanGraphicsDevice::createVAO(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer = 0)
-   {
-      return InvalidHandle;
-   }
+	VertexArrayHandle VulkanGraphicsDevice::createVAO(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer = 0)
+	{
+		return InvalidHandle;
+	}
 
-   void VulkanGraphicsDevice::bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, int32_t index)
-   {
-   }
+	void VulkanGraphicsDevice::bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, int32_t index)
+	{
+	}
 
-   void VulkanGraphicsDevice::deleteVertexInputLayout(LayoutHandle handle)
-   {
-   }
+	void VulkanGraphicsDevice::deleteVertexInputLayout(LayoutHandle handle)
+	{
+	}
 
-   void VulkanGraphicsDevice::deleteVAO(VertexArrayHandle handle)
-   {
-   }
+	void VulkanGraphicsDevice::deleteVAO(VertexArrayHandle handle)
+	{
+	}
 
-   void VulkanGraphicsDevice::deleteBuffer(BufferHandle handle)
-   {
-   }
+	void VulkanGraphicsDevice::deleteBuffer(BufferHandle handle)
+	{
+	}
 
-   void VulkanGraphicsDevice::deleteShader(ShaderHandle handle)
-   {
-   }
+	void VulkanGraphicsDevice::deleteShader(ShaderHandle handle)
+	{
+	}
 
-   void VulkanGraphicsDevice::submitCommandQueue(CommandQueue *cmdQueue)
-   {
-   }
+	void VulkanGraphicsDevice::submitCommandQueue(CommandQueue *cmdQueue)
+	{
+	}
 }

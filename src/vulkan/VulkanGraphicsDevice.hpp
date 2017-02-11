@@ -31,42 +31,42 @@
 
 namespace Jikken
 {
-   class VulkanGraphicsDevice : public GraphicsDevice
-   {
-   public:
+	class VulkanGraphicsDevice : public GraphicsDevice
+	{
+	public:
 
-      VulkanGraphicsDevice();
-      virtual ~VulkanGraphicsDevice();
+		VulkanGraphicsDevice();
+		virtual ~VulkanGraphicsDevice();
 
-      virtual ShaderHandle createShader(const std::vector<ShaderDetails> &shaders) override;
+		virtual ShaderHandle createShader(const std::vector<ShaderDetails> &shaders) override;
 
-      virtual BufferHandle createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, float *data) override;
+		virtual BufferHandle createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, float *data) override;
 
-      virtual LayoutHandle createVertexInputLayout(const std::vector<VertexInputLayout> &attributes) override;
+		virtual LayoutHandle createVertexInputLayout(const std::vector<VertexInputLayout> &attributes) override;
 
-      virtual VertexArrayHandle createVAO(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer = 0) override;
+		virtual VertexArrayHandle createVAO(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer = 0) override;
 
-      virtual void bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, int32_t index) override;
+		virtual void bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, int32_t index) override;
 
-      virtual void deleteVertexInputLayout(LayoutHandle handle) override;
+		virtual void deleteVertexInputLayout(LayoutHandle handle) override;
 
-      virtual void deleteVAO(VertexArrayHandle handle) override;
+		virtual void deleteVAO(VertexArrayHandle handle) override;
 
-      virtual void deleteBuffer(BufferHandle handle) override;
+		virtual void deleteBuffer(BufferHandle handle) override;
 
-      virtual void deleteShader(ShaderHandle handle) override;
+		virtual void deleteShader(ShaderHandle handle) override;
 
-      virtual void submitCommandQueue(CommandQueue *queue) override;
+		virtual void submitCommandQueue(CommandQueue *queue) override;
 
-   private:
-      
-      VkInstance mInstance; //vulkan app instance
-      VkPhysicalDevice mPhysicalDevice; //physical device
-      VkDevice mDevice; // logical device
-      VkDebugReportCallbackEXT mDebugCallback; //debug callback
-      VkAllocationCallbacks *mAllocCallback; //allocation callback
+	private:
 
-   }:
+		VkInstance mInstance; //vulkan app instance
+		VkPhysicalDevice mPhysicalDevice; //physical device
+		VkDevice mDevice; // logical device
+		VkDebugReportCallbackEXT mDebugCallback; //debug callback
+		VkAllocationCallbacks *mAllocCallback; //allocation callback
+
+	}:
 }
 
 #endif
