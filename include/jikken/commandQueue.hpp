@@ -36,7 +36,7 @@ namespace Jikken
 	private:
 		CommandQueue()
 		{
-
+			mLastCmd = nullptr;
 		}
 
 		~CommandQueue()
@@ -48,7 +48,12 @@ namespace Jikken
 		template<class T>
 		inline T* alloc()
 		{
-			return mMemory.malloc<T>();
+			// Build up linked list.
+			ICommand *cmd = mMemory.malloc<T>();
+			if (mLastCmd != nullptr)
+				mLastCmd->next = cmd;
+			mLastCmd = cmd;
+			return static_cast<T*>(cmd);
 		}
 
 		inline ICommand* beginList()
@@ -63,7 +68,7 @@ namespace Jikken
 
 	private:
 		PerFrameMemoryPool mMemory;
-		ICommand *mCurrentPtr;
+		ICommand *mLastCmd;
 	};
 }
 

@@ -37,18 +37,20 @@ namespace Jikken
 	/// Once free() is called, all memory is considered to be reset.
 	class PerFrameMemoryPool
 	{
+		typedef uint8_t* Page;
+
 	public:
 		const size_t PAGE_SIZE = 2048;
 
-		const size_t PAGE_OFFSET = PAGE_SIZE - 1 - sizeof(uintptr_t);
+		const size_t PAGE_OFFSET = PAGE_SIZE - sizeof(Page);
 
 		/// Gets the pointer to the next page of memory in the pool.
 		/// @param page The memory page we are checking.
 		/// @return a pointer to the next page, or 0x0 if one does not eixst.
 	private:
-		inline uintptr_t* getNextPageOffset(uintptr_t *page)
+		inline Page* getNextPageOffset(Page page)
 		{
-			return &page[PAGE_OFFSET];
+			return reinterpret_cast<Page*>(&page[PAGE_OFFSET]);
 		}
 
 	public:
@@ -59,30 +61,31 @@ namespace Jikken
 
 			// The last bytes will hold a pointer to the next page of memory we will
 			// allocate. Since we only want 1 page for now, just store 0x0
-			memset(getNextPageOffset(reinterpret_cast<uintptr_t*>(mMemory)), 0, sizeof(size_t));
+			Page *nextPage = getNextPageOffset(mMemory);
+			*nextPage = nullptr;
 
 			// Offset within our current page.
 			mCurrentPtr = 0;
 
 			// Pointer to our current page
-			mCurrentPage = reinterpret_cast<uintptr_t*>(mMemory);
+			mCurrentPage = &mMemory;
 		}
 
 		~PerFrameMemoryPool()
 		{
 			// First we have to bulid the list of pages that we have to free.
-			std::vector<uintptr_t*> pages;
-			uintptr_t *page = reinterpret_cast<uintptr_t*>(&mMemory[0]);
-			while (page != nullptr)
+			std::vector<Page*> pages{ &mMemory };
+			Page *page = getNextPageOffset(mMemory);
+			while (*page != nullptr)
 			{
 				pages.push_back(page);
-				page = getNextPageOffset(page);
+				page = getNextPageOffset(*page);
 			}
 
 			// Now that we have our list of pages, we can free them.
-			for (uintptr_t *mem : pages)
+			for (Page *mem : pages)
 			{
-				delete[] mem;
+				delete[] *mem;
 			}
 		}
 
@@ -94,21 +97,22 @@ namespace Jikken
 			{
 				// See if we already have a page allocated.
 				// If we do, we're golden. If not, just alloc another page!
-				uintptr_t *next = getNextPageOffset(mCurrentPage);
-				if (next == nullptr)
+				Page *next = getNextPageOffset(*mCurrentPage);
+				if (*next == nullptr)
 				{
 					// Alloc new page.
-					uint8_t *page = new uint8_t[PAGE_SIZE];
+					Page page = new uint8_t[PAGE_SIZE];
 
 					// Assign the current page's next page ptr to this page.
-					getNextPageOffset(mCurrentPage) = page;
+					next = &page;
 
 					// The last bytes will hold a pointer to the next page of memory we will
 					// allocate. Set it to null since we are only allocating 1 page at a time.
-					memset(getNextPageOffset(reinterpret_cast<uintptr_t*>(page)), 0, sizeof(size_t));
+					Page *pg = getNextPageOffset(page);
+					*pg = nullptr;
 
 					// Set current page
-					mCurrentPage = page;
+					mCurrentPage = &page;
 				}
 				else
 				{
@@ -120,8 +124,8 @@ namespace Jikken
 				mCurrentPtr = 0;
 			}
 
-			T *obj = reinterpret_cast<T*>(mCurrentPage + mCurrentPtr);
-			mCurrentPtr += size;
+			T *obj = reinterpret_cast<T*>(*mCurrentPage + mCurrentPtr);
+			mCurrentPtr += static_cast<uint32_t>(size);
 
 			// Note the use of placement new. It doesn't do any
 			// allocation. It just calls the constructor of our
@@ -133,7 +137,7 @@ namespace Jikken
 		{
 			// Reset the stack.
 			mCurrentPtr = 0;
-			mCurrentPage = reinterpret_cast<uintptr_t*>(mMemory);
+			mCurrentPage = &mMemory;
 		}
 
 		uint8_t* getCommandQueuePtr() const
@@ -142,9 +146,9 @@ namespace Jikken
 		}
 
 	private:
-		uint8_t *mMemory;
+		Page mMemory;
 		uint32_t mCurrentPtr;
-		uintptr_t *mCurrentPage;
+		Page *mCurrentPage;
 	};
 }
 

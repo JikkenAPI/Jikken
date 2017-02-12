@@ -54,10 +54,9 @@ namespace Jikken
 		friend class GLGraphicsDevice;
 
 		ICommand();
-		CommandType commandType;
 
-		// Restrict next pointer only for memory management. Not API.
-	private:
+	protected:
+		CommandType commandType;
 		ICommand *next;
 	};
 
