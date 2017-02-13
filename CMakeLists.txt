@@ -69,5 +69,5 @@ if (JIKKEN_OPENGL)
 endif()
 
 if (JIKKEN_VULKAN)
-	target_compile_definitions(Jikken PUBLILC JIKKEN_VULKAN)
+	target_compile_definitions(Jikken PUBLIC JIKKEN_VULKAN)
 endif()
