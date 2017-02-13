@@ -76,7 +76,7 @@ namespace Jikken
 		if (!glfwVulkanSupported())
 		{
 			std::printf("Vulkan is not supported\n");
-			return false;
+		//	return false;
 		}
 
 		//validation layers
@@ -290,7 +290,8 @@ namespace Jikken
 		}
 
 		//create vulkan device
-		//todo: for some reason NVidia drivers spew out vkCreateSampler errors here, find out why because we are not calling that function!
+		//todo: for some reason this is creating vkCreateSampler errors here, find out why because we are not calling that function.
+		//happens on both intel/nv drivers and also happens with lunarg demo, possible lunarg debug layer bug??
 		result = vkCreateDevice(mPhysicalDevice, &deviceCreateInfo, mAllocCallback, &mDevice);
 		if (result != VK_SUCCESS)
 		{
