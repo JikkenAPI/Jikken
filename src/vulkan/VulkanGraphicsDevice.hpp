@@ -60,6 +60,8 @@ namespace Jikken
 
 		virtual bool init(void *glfwWinHandle) override;
 
+		virtual void present() override;
+
 	private:
 
 		VkInstance mInstance; //vulkan app instance

@@ -29,6 +29,9 @@
 #include <GL/glew.h>
 #include "jikken/graphicsDevice.hpp"
 
+//temp forward declare
+struct GLFWwindow;
+
 namespace Jikken
 {
 	class GLGraphicsDevice : public GraphicsDevice
@@ -77,6 +80,8 @@ namespace Jikken
 
 		virtual bool init(void *glfwWinHandle) override;
 
+		virtual void present() override;
+
 	protected:
 		void _processCmd(ICommand *cmd);
 
@@ -100,6 +105,9 @@ namespace Jikken
 		VertexArrayHandle mVertexArrayHandle;
 		ShaderHandle mShaderHandle;
 		LayoutHandle mLayoutHandle;
+
+		//temp window handle
+		GLFWwindow *mWindowHandle;
 
 		// GL needs a VAO bound for most functions.
 		// This will just make a global one.

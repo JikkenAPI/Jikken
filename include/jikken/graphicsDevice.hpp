@@ -67,6 +67,8 @@ namespace Jikken
 
 		virtual bool init(void *glfwWinHandle) = 0;
 
+		virtual void present() = 0;
+
 	protected:
 		std::vector<CommandQueue*> mCommandQueuePool;
 	};

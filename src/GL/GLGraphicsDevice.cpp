@@ -26,6 +26,8 @@
 #include <cstdlib>
 #include "GL/GLGraphicsDevice.hpp"
 #include "GL/GLUtil.hpp"
+//just temp
+#include <GLFW/glfw3.h>
 
 namespace Jikken
 {
@@ -36,6 +38,7 @@ namespace Jikken
 		mShaderHandle = 0;
 		mLayoutHandle = 0;
 		mCurrentVAO = 0;
+		mWindowHandle = nullptr;
 
 		mStateCache.blend.firstSet = true;
 		mStateCache.depthStencil.firstSet = true;
@@ -53,6 +56,7 @@ namespace Jikken
 	//todo
 	bool GLGraphicsDevice::init(void *glfwWinHandle)
 	{
+		mWindowHandle = static_cast<GLFWwindow*>(glfwWinHandle);
 		return true;
 	}
 
@@ -470,5 +474,10 @@ namespace Jikken
 
 		// We've set it at least once.
 		mStateCache.cull.firstSet = false;
+	}
+
+	void GLGraphicsDevice::present()
+	{
+		glfwSwapBuffers(mWindowHandle);
 	}
 }

@@ -92,4 +92,8 @@ namespace Jikken
 	void VulkanGraphicsDevice::submitCommandQueue(CommandQueue *cmdQueue)
 	{
 	}
+
+	void VulkanGraphicsDevice::present()
+	{
+	}
 }
