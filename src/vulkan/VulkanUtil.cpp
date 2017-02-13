@@ -26,4 +26,33 @@
 
 namespace Jikken
 {
+	namespace vkutils
+	{
+		bool checkExtension(const std::string &extensionName, const std::vector<VkExtensionProperties> &extensionList)
+		{
+			for (const auto &ext : extensionList)
+			{
+				if (extensionName == std::string(ext.extensionName))
+					return true;
+			}
+			return false;
+		}
+
+		bool checkLayer(const std::string &layerName, const std::vector<VkLayerProperties> &layerList)
+		{
+			for (const auto &layer : layerList)
+			{
+				if (layerName == std::string(layer.layerName))
+					return true;
+			}
+			return false;
+		}
+
+		VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t obj, size_t location,
+			int32_t code, const char* layerPrefix, const char* msg, void* userData)
+		{
+			std::printf("Vulkan Debug: %s\n", msg);
+			return VK_FALSE;
+		}
+	}
 }
