@@ -87,6 +87,10 @@ endif()
 target_link_libraries(Jikken ${JIKKEN_LIBS})
 target_include_directories(Jikken PUBLIC ${JIKKEN_INCLUDE})
 
+source_group("core" REGULAR_EXPRESSION /*)
+source_group("opengl" REGULAR_EXPRESSION GL/*)
+source_group("vulkan" REGULAR_EXPRESSION vulkan/*)
+
 #unfortunately we have to match openblockcraft with this one :/
 #---BEGIN COPY FROM BULLET CMAKE---
 
