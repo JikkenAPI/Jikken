@@ -65,8 +65,11 @@ namespace Jikken
 	private:
 
 		VkInstance mInstance; //vulkan app instance
+		VkSurfaceKHR mSurface; //window surface
 		VkPhysicalDevice mPhysicalDevice; //physical device
 		VkDevice mDevice; // logical device
+		VkQueue mGraphicsQueue; //graphics queue
+		uint32_t mGraphicsQueueIndex; //graphics queue index
 		VkDebugReportCallbackEXT mDebugCallback; //debug callback
 		VkAllocationCallbacks *mAllocCallback; //allocation callback
 

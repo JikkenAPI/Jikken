@@ -33,8 +33,11 @@ namespace Jikken
 {
 	VulkanGraphicsDevice::VulkanGraphicsDevice() :
 		mInstance(VK_NULL_HANDLE),
+		mSurface(VK_NULL_HANDLE),
 		mPhysicalDevice(VK_NULL_HANDLE),
 		mDevice(VK_NULL_HANDLE),
+		mGraphicsQueue(VK_NULL_HANDLE),
+		mGraphicsQueueIndex(UINT32_MAX),
 		mDebugCallback(VK_NULL_HANDLE),
 		mAllocCallback(nullptr)
 	{
@@ -42,6 +45,19 @@ namespace Jikken
 
 	VulkanGraphicsDevice::~VulkanGraphicsDevice()
 	{
+		//wait for device to be idle
+		if (mDevice)
+			vkDeviceWaitIdle(mDevice);
+
+		// cleanup other stuff
+
+		// destroy logical device
+		if (mDevice)
+			vkDestroyDevice(mDevice, mAllocCallback);
+
+		if (mSurface)
+			vkDestroySurfaceKHR(mInstance, mSurface, mAllocCallback);
+
 		if (mDebugCallback)
 		{
 			auto debugReportDestroyFunc = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(mInstance, "vkDestroyDebugReportCallbackEXT");
@@ -190,6 +206,105 @@ namespace Jikken
 				std::printf("Failed to retrieve vkCreateDebugReportCallbackEXT address. Debug callbacks will be disabled\n");
 				validationLayersEnabled = false;
 			}
+		}
+
+		//create window surface
+		result = glfwCreateWindowSurface(mInstance, static_cast<GLFWwindow*>(glfwWinHandle), mAllocCallback, &mSurface);
+		if (result != VK_SUCCESS)
+		{
+			std::printf("Failed to create vulkan window surface\n");
+			return false;
+		}
+
+		//find physical devices
+		uint32_t numDevices = 0;
+		result = vkEnumeratePhysicalDevices(mInstance, &numDevices, nullptr);
+		if (result != VK_SUCCESS || numDevices == 0)
+		{
+			std::printf("vkEnumeratePhysicalDevices failed\n");
+			return false;
+		}
+
+		std::vector<VkPhysicalDevice> physicalDevices(numDevices);
+		result = vkEnumeratePhysicalDevices(mInstance, &numDevices, physicalDevices.data());
+		if (result != VK_SUCCESS)
+		{
+			std::printf("vkEnumeratePhysicalDevices failed\n");
+			return false;
+		}
+
+		//get our queue index and hopefully find an acceptable device
+		for (const auto &device : physicalDevices)
+		{
+			//break on first acceptable device
+			if (vkutils::checkPhysicalDevice(device, mSurface, mGraphicsQueueIndex))
+			{
+				mPhysicalDevice = device;
+				break;
+			}
+		}
+
+		if (mGraphicsQueueIndex == UINT32_MAX)
+		{
+			std::printf("Failed to find suitable graphics queue\n");
+			return false;
+		}
+
+		if (mPhysicalDevice == VK_NULL_HANDLE)
+		{
+			std::printf("Failed to select a physical device\n");
+			return false;
+		}
+
+		//print some information about our physical device
+		vkutils::printDeviceInfo(mPhysicalDevice);
+
+		//create logical device
+		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+		float queuePriority = 1.0f;
+		VkDeviceQueueCreateInfo queueCreateInfo = {};
+		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		queueCreateInfo.flags = 0;
+		queueCreateInfo.queueFamilyIndex = mGraphicsQueueIndex;
+		queueCreateInfo.queueCount = 1;
+		queueCreateInfo.pQueuePriorities = &queuePriority;
+		queueCreateInfos.push_back(queueCreateInfo);
+
+		//need swap chain extension - this extension is already checked above with checkPhysicalDevice, no need to check again
+		std::vector<const char*> requiredDeviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+
+		VkDeviceCreateInfo deviceCreateInfo = {};
+		deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+		deviceCreateInfo.flags = 0;
+		deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(requiredDeviceExtensions.size());
+		deviceCreateInfo.ppEnabledExtensionNames = requiredDeviceExtensions.data();
+		deviceCreateInfo.queueCreateInfoCount = 1;
+		deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
+		deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+
+		deviceCreateInfo.enabledLayerCount = 0;
+		if (validationLayersEnabled)
+		{
+			deviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+			deviceCreateInfo.ppEnabledLayerNames = validationLayers.data();
+		}
+
+		//create vulkan device
+		//todo: for some reason NVidia drivers spew out vkCreateSampler errors here, find out why because we are not calling that function!
+		result = vkCreateDevice(mPhysicalDevice, &deviceCreateInfo, mAllocCallback, &mDevice);
+		if (result != VK_SUCCESS)
+		{
+			std::printf("vkCreateDevice failed\n");
+			return false;
+		}
+
+		//grab graphics queue handle
+		vkGetDeviceQueue(mDevice, mGraphicsQueueIndex, 0, &mGraphicsQueue);
+
+		if (!mGraphicsQueue)
+		{
+			std::printf("Failed to retrieve graphics queue\n");
+			return false;
 		}
 
 		return true;

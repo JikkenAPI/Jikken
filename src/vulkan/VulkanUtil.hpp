@@ -35,6 +35,8 @@ namespace Jikken
 	{
 		bool checkExtension(const std::string &extensionName, const std::vector<VkExtensionProperties> &extensionList);
 		bool checkLayer(const std::string &layerName, const std::vector<VkLayerProperties> &layerList);
+		bool checkPhysicalDevice(const VkPhysicalDevice physicalDevice, const VkSurfaceKHR surface, uint32_t &graphicsQueue);
+		void printDeviceInfo(const VkPhysicalDevice device);
 
 		//debug callback
 		VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t obj, size_t location,
