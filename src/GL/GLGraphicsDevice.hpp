@@ -61,9 +61,9 @@ namespace Jikken
 
 		virtual LayoutHandle createVertexInputLayout(const std::vector<VertexInputLayout> &attributes) override;
 
-		virtual VertexArrayHandle createVAO(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer = 0) override;
+		virtual VertexArrayHandle createVAO(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer = InvalidHandle) override;
 
-		virtual void bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, int32_t index) override;
+		virtual void bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, const char *name, int32_t index) override;
 
 		virtual void deleteVertexInputLayout(LayoutHandle handle) override;
 
@@ -80,6 +80,7 @@ namespace Jikken
 
 		void _setShaderCmd(SetShaderCommand *cmd);
 		void _updateBufferCmd(UpdateBufferCommand *cmd);
+		void _reallocBufferCmd(ReallocBufferCommand *cmd);
 		void _drawCmd(DrawCommand *cmd);
 		void _drawInstanceCmd(DrawInstanceCommand *cmd);
 		void _clearBufferCmd(ClearBufferCommand *cmd);

@@ -51,9 +51,9 @@ namespace Jikken
 
 		virtual LayoutHandle createVertexInputLayout(const std::vector<VertexInputLayout> &attributes) = 0;
 
-		virtual VertexArrayHandle createVAO(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer = 0) = 0;
+		virtual VertexArrayHandle createVAO(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer = InvalidHandle) = 0;
 
-		virtual void bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, int32_t index) = 0;
+		virtual void bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, const char *name, int32_t index) = 0;
 
 		virtual void deleteVertexInputLayout(LayoutHandle handle) = 0;
 

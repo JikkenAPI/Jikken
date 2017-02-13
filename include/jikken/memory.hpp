@@ -40,7 +40,7 @@ namespace Jikken
 		typedef uint8_t* Page;
 
 	public:
-		const size_t PAGE_SIZE = 2048;
+		const size_t PAGE_SIZE = 2048*8*4;
 
 		const size_t PAGE_OFFSET = PAGE_SIZE - sizeof(Page);
 
