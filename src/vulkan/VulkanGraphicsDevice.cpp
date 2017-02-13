@@ -128,7 +128,8 @@ namespace Jikken
 			}
 		}
 
-		//setup validation layers - just VK_LAYER_LUNARG_standard_validation for now. There are plenty more though ;)
+		//setup validation layers - VK_LAYER_LUNARG_standard_validation enables:
+		//VK_LAYER_GOOGLE_threading, VK_LAYER_LUNARG_parameter_validation, VK_LAYER_LUNARG_object_tracker, VK_LAYER_LUNARG_image, VK_LAYER_LUNARG_core_validation,VK_LAYER_LUNARG_swapchain, and VK_LAYER_GOOGLE_unique_objects
 		const std::vector<const char*> validationLayers = { "VK_LAYER_LUNARG_standard_validation" };
 
 		uint32_t layerCount = 0;
