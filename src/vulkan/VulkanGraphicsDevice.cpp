@@ -26,6 +26,8 @@
 #include <cstdlib>
 #include "vulkan/VulkanGraphicsDevice.hpp"
 #include "vulkan/VulkanUtil.hpp"
+//just temp
+#include <GLFW/glfw3.h>
 
 namespace Jikken
 {
@@ -40,6 +42,11 @@ namespace Jikken
 
 	VulkanGraphicsDevice::~VulkanGraphicsDevice()
 	{
+	}
+
+	bool VulkanGraphicsDevice::init(void *glfwWinHandle)
+	{
+		return true;
 	}
 
 	ShaderHandle VulkanGraphicsDevice::createShader(const std::vector<ShaderDetails> &shaders)
@@ -57,7 +64,7 @@ namespace Jikken
 		return InvalidHandle;
 	}
 
-	VertexArrayHandle VulkanGraphicsDevice::createVAO(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer = 0)
+	VertexArrayHandle VulkanGraphicsDevice::createVAO(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer)
 	{
 		return InvalidHandle;
 	}

@@ -58,6 +58,8 @@ namespace Jikken
 
 		virtual void submitCommandQueue(CommandQueue *queue) override;
 
+		virtual bool init(void *glfwWinHandle) override;
+
 	private:
 
 		VkInstance mInstance; //vulkan app instance
@@ -66,7 +68,7 @@ namespace Jikken
 		VkDebugReportCallbackEXT mDebugCallback; //debug callback
 		VkAllocationCallbacks *mAllocCallback; //allocation callback
 
-	}:
+	};
 }
 
 #endif

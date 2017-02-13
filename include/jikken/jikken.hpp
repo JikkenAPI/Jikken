@@ -30,7 +30,7 @@
 
 namespace Jikken
 {
-	GraphicsDevice* createGraphicsDevice(API api);
+	GraphicsDevice* createGraphicsDevice(API api, void *glfwWinHandle);
 	void destroyGraphicsDevice(GraphicsDevice *device);
 }
 

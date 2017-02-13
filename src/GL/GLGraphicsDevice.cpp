@@ -50,6 +50,12 @@ namespace Jikken
 		glDeleteVertexArrays(1, &mGlobalVAO);
 	}
 
+	//todo
+	bool GLGraphicsDevice::init(void *glfwWinHandle)
+	{
+		return true;
+	}
+
 	ShaderHandle GLGraphicsDevice::createShader(const std::vector<ShaderDetails> &shaders)
 	{
 		GLuint program;

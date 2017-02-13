@@ -31,6 +31,7 @@ namespace Jikken
 {
 	enum class API
 	{
+		eNull,
 		eOpenGL,
 		eVulkan
 	};

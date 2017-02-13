@@ -34,12 +34,13 @@
 
 namespace Jikken
 {
-	GraphicsDevice* createGraphicsDevice(API api)
+	GraphicsDevice* createGraphicsDevice(API api, void *glfwWinHandle)
 	{
+		GraphicsDevice* pDevice = nullptr;
 		if (api == API::eOpenGL)
 		{
 #ifdef JIKKEN_OPENGL
-			return new GLGraphicsDevice();
+			pDevice = new GLGraphicsDevice();
 #else
 			assert(false);
 			return nullptr;
@@ -48,13 +49,26 @@ namespace Jikken
 		else if (api == API::eVulkan)
 		{
 #ifdef JIKKEN_VULKAN
-			return new VulkanGraphicsDevice();
+			pDevice =  new VulkanGraphicsDevice();
 #else
 			assert(false);
 			return nullptr;
 #endif
 		}
-		return nullptr;
+		else //not yet implemented
+		{
+			assert(false);
+			return nullptr;
+		}
+
+		if (!pDevice->init(glfwWinHandle))
+		{
+			delete pDevice;
+			pDevice = nullptr;
+			assert(false);
+		}
+
+		return pDevice;
 	}
 
 	void destroyGraphicsDevice(GraphicsDevice *device)

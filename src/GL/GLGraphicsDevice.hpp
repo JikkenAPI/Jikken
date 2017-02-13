@@ -75,6 +75,8 @@ namespace Jikken
 
 		virtual void submitCommandQueue(CommandQueue *queue) override;
 
+		virtual bool init(void *glfwWinHandle) override;
+
 	protected:
 		void _processCmd(ICommand *cmd);
 
