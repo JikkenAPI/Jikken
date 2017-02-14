@@ -78,6 +78,8 @@ namespace Jikken
 
 		inline void resetQueue()
 		{
+			mLastCmd = nullptr;
+			mFirstCmd = nullptr;
 			mCmdMemory.free();
 			mBufferMemory.free();
 		}
