@@ -44,6 +44,12 @@ namespace Jikken
 		next = nullptr;
 	}
 
+	ReallocBufferCommand::ReallocBufferCommand()
+	{
+		commandType = CommandType::eReallocBuffer;
+		next = nullptr;
+	}
+
 	DrawCommand::DrawCommand()
 	{
 		commandType = CommandType::eDraw;

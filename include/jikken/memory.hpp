@@ -25,107 +25,40 @@
 #ifndef _JIKKEN_MEMORY_HPP_
 #define _JIKKEN_MEMORY_HPP_
 
+#include <cassert>
 #include <cstdint>
 #include <vector>
 
 namespace Jikken
 {
-	/// A custom memory allocator that operates as if it was on a stack.
-	/// Once a page fills up within the pool, a new page is generated.
-	/// Page references to the next page are stored as the last 
-	/// sizeof(uintptr_t) bytes on the current page.
-	/// Once free() is called, all memory is considered to be reset.
-	class PerFrameMemoryPool
+	class MemoryPage
 	{
+	public:
 		typedef uint8_t* Page;
 
-	public:
-		const size_t PAGE_SIZE = 2048;
-
-		const size_t PAGE_OFFSET = PAGE_SIZE - sizeof(Page);
-
-		/// Gets the pointer to the next page of memory in the pool.
-		/// @param page The memory page we are checking.
-		/// @return a pointer to the next page, or 0x0 if one does not eixst.
-	private:
-		inline Page* getNextPageOffset(Page page)
+		explicit MemoryPage(size_t pageSize)
 		{
-			return reinterpret_cast<Page*>(&page[PAGE_OFFSET]);
+			mMemory = new uint8_t[pageSize];
+			mPageSize = pageSize;
+			mPointer = 0;
 		}
 
-	public:
-		PerFrameMemoryPool()
+		~MemoryPage()
 		{
-			// Allocate a page of memory.
-			mMemory = new uint8_t[PAGE_SIZE];
-
-			// The last bytes will hold a pointer to the next page of memory we will
-			// allocate. Since we only want 1 page for now, just store 0x0
-			Page *nextPage = getNextPageOffset(mMemory);
-			*nextPage = nullptr;
-
-			// Offset within our current page.
-			mCurrentPtr = 0;
-
-			// Pointer to our current page
-			mCurrentPage = &mMemory;
+			delete[] mMemory;
 		}
 
-		~PerFrameMemoryPool()
-		{
-			// First we have to bulid the list of pages that we have to free.
-			std::vector<Page*> pages{ &mMemory };
-			Page *page = getNextPageOffset(mMemory);
-			while (*page != nullptr)
-			{
-				pages.push_back(page);
-				page = getNextPageOffset(*page);
-			}
-
-			// Now that we have our list of pages, we can free them.
-			for (Page *mem : pages)
-			{
-				delete[] *mem;
-			}
-		}
-
+		/// malloc an object of size T to the page.
+		/// @return A pointer to an object of type T, or nullptr if there wasn't sufficient space.
 		template<class T>
 		T* malloc()
 		{
 			size_t size = sizeof(T);
-			if (size + mCurrentPtr >= PAGE_OFFSET)
-			{
-				// See if we already have a page allocated.
-				// If we do, we're golden. If not, just alloc another page!
-				Page *next = getNextPageOffset(*mCurrentPage);
-				if (*next == nullptr)
-				{
-					// Alloc new page.
-					Page page = new uint8_t[PAGE_SIZE];
+			if (size + mPointer > mPageSize)
+				return nullptr;
 
-					// Assign the current page's next page ptr to this page.
-					next = &page;
-
-					// The last bytes will hold a pointer to the next page of memory we will
-					// allocate. Set it to null since we are only allocating 1 page at a time.
-					Page *pg = getNextPageOffset(page);
-					*pg = nullptr;
-
-					// Set current page
-					mCurrentPage = &page;
-				}
-				else
-				{
-					// we already have a page allocated
-					mCurrentPage = next;
-				}
-
-				// reset current offset of new page to beginning.
-				mCurrentPtr = 0;
-			}
-
-			T *obj = reinterpret_cast<T*>(*mCurrentPage + mCurrentPtr);
-			mCurrentPtr += static_cast<uint32_t>(size);
+			T *obj = reinterpret_cast<T*>(mMemory + mPointer);
+			mPointer += static_cast<int32_t>(size);
 
 			// Note the use of placement new. It doesn't do any
 			// allocation. It just calls the constructor of our
@@ -133,22 +66,108 @@ namespace Jikken
 			return new(obj) T();
 		}
 
-		void free()
+		void* malloc(size_t size)
 		{
-			// Reset the stack.
-			mCurrentPtr = 0;
-			mCurrentPage = &mMemory;
+			if (size + mPointer > mPageSize)
+				return nullptr;
+			void *mem = mMemory + mPointer;
+			mPointer += static_cast<int32_t>(size);
+			return mem;
 		}
 
-		uint8_t* getCommandQueuePtr() const
+		inline void free()
 		{
-			return mMemory;
+			mPointer = 0;
 		}
 
 	private:
 		Page mMemory;
-		uint32_t mCurrentPtr;
-		Page *mCurrentPage;
+		size_t mPageSize;
+		int32_t mPointer;
+	};
+
+	/// A custom memory allocator that operates as if it was on a stack.
+	/// Once a page fills up within the pool, a new page is generated.
+	/// Page references to the next page are stored as the last 
+	/// sizeof(uintptr_t) bytes on the current page.
+	/// Once free() is called, all memory is considered to be reset.
+	class MemoryPool
+	{
+	public:
+		const static size_t MEGABYTE = 1048576;
+
+		explicit MemoryPool(size_t pageSize, int32_t numDefaultPages)
+		{
+			for (int32_t i = 0; i < numDefaultPages; ++i)
+				mPages.push_back(new MemoryPage(pageSize));
+			mCurrentPage = 0;
+			mPageSize = pageSize;
+		}
+
+		~MemoryPool()
+		{
+			for (auto page : mPages)
+				delete page;
+		}
+
+		template<class T>
+		T* malloc()
+		{
+#ifdef _DEBUG
+			if (sizeof(T) > mPageSize)
+			{
+				printf("Need to increase stack frame. sizeof(T) is %d while pageSize is %d\n", static_cast<int32_t>(sizeof(T)), mPageSize);
+				assert(false);
+			}
+#endif
+
+			T* obj = mPages[mCurrentPage]->malloc<T>();
+			if (obj == nullptr)
+			{
+				// Increase to a new page. If we need another page, just alloc another one.
+				++mCurrentPage;
+				if (mCurrentPage == mPages.size())
+					mPages.push_back(new MemoryPage(mPageSize));
+				obj = mPages[mCurrentPage]->malloc<T>();
+			}
+			return obj;
+		}
+
+
+		void* malloc(size_t size)
+		{
+#ifdef _DEBUG
+			if (size > mPageSize)
+			{
+				printf("Need to increase stack frame. sizeof(T) is %d while pageSize is %d\n", static_cast<int32_t>(size), static_cast<int32_t>(mPageSize));
+				assert(false);
+			}
+#endif
+
+			void *mem = mPages[mCurrentPage]->malloc(size);
+			if (mem == nullptr)
+			{
+				// Increase to a new page. If we need another page, just alloc another one.
+				++mCurrentPage;
+				if (mCurrentPage == mPages.size())
+					mPages.push_back(new MemoryPage(mPageSize));
+				mem = mPages[mCurrentPage]->malloc(size);
+			}
+			return mem;
+		}
+
+		void free()
+		{
+			for (int32_t i = 0; i <= mCurrentPage; ++i)
+				mPages[i]->free();
+			mCurrentPage = 0;
+		}
+
+	private:
+
+		std::vector<MemoryPage*> mPages;
+		int32_t mCurrentPage;
+		size_t mPageSize;
 	};
 }
 

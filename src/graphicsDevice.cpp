@@ -26,6 +26,10 @@
 
 namespace Jikken
 {
+	GraphicsDevice::GraphicsDevice()
+	{
+	}
+
 	GraphicsDevice::~GraphicsDevice()
 	{
 		// Cleanup all command queues.
@@ -38,7 +42,7 @@ namespace Jikken
 
 	CommandQueue* GraphicsDevice::createCommandQueue()
 	{
-		CommandQueue *queue = new CommandQueue();
+		CommandQueue *queue = new CommandQueue(this);
 		mCommandQueuePool.push_back(queue);
 		return queue;
 	}

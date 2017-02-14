@@ -31,6 +31,15 @@
 
 namespace Jikken
 {
+	void checkGLErrors()
+	{
+		GLenum err;
+		while ((err = glGetError()) != GL_NO_ERROR)
+		{
+			printf("GL error: %i\n", err);
+		}
+	}
+
 	GLGraphicsDevice::GLGraphicsDevice()
 	{
 		mBufferHandle = 0;
@@ -109,6 +118,8 @@ namespace Jikken
 				printf(info);
 				abort();
 			}
+
+			shaderAttachments.push_back(attachment);
 		}
 
 		// Create the program. A program is made up of one or more attachments.
@@ -140,6 +151,8 @@ namespace Jikken
 		for (GLuint attachment : shaderAttachments)
 			glDeleteShader(attachment);
 
+		checkGLErrors();
+
 		ShaderHandle handle = mShaderHandle++;
 		mShaderToGL[handle] = { program };
 		return handle;
@@ -153,6 +166,7 @@ namespace Jikken
 		glGenBuffers(1, &buffer);
 		glBindBuffer(bufferTypeToGL(type), buffer);
 		glBufferData(bufferTypeToGL(type), dataSize, data, bufferUsageHintToGL(hint));
+		checkGLErrors();
 
 		mBufferToGL[handle] = { type, buffer };
 		return handle;
@@ -160,6 +174,14 @@ namespace Jikken
 
 	LayoutHandle GLGraphicsDevice::createVertexInputLayout(const std::vector<VertexInputLayout> &attributes)
 	{
+#ifdef _DEBUG
+		if (attributes.size() == 0)
+		{
+			// We need at least 1 attribute.
+			assert(false);
+		}
+#endif
+
 		// Since the VAO handles layout in GL, we just copy it and store it.
 		LayoutHandle layout = mLayoutHandle++;
 		for (const VertexInputLayout &attr : attributes)
@@ -172,7 +194,7 @@ namespace Jikken
 #ifdef _DEBUG
 		if (mBufferToGL[vertexBuffer].type != BufferType::eVertexBuffer)
 			assert(false);
-		if (indexBuffer != 0 && mBufferToGL[indexBuffer].type != BufferType::eIndexBuffer)
+		if (indexBuffer != InvalidHandle && mBufferToGL[indexBuffer].type != BufferType::eIndexBuffer)
 			assert(false);
 #endif
 		GLuint vao;
@@ -183,7 +205,7 @@ namespace Jikken
 			glBindBuffer(GL_ARRAY_BUFFER, mBufferToGL[vertexBuffer].buffer);
 
 			// Index buffer is optional. We can draw without index buffers in OpenGL.
-			if (indexBuffer > 0)
+			if (indexBuffer != InvalidHandle)
 				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mBufferToGL[indexBuffer].buffer);
 
 			// Bind input layout.
@@ -204,19 +226,24 @@ namespace Jikken
 		// Now bind global VAO. The above will now work for "vao"
 		glBindVertexArray(mGlobalVAO);
 		
+		checkGLErrors();
+
 		VertexArrayHandle handle = mVertexArrayHandle++;
 		mVertexArrayToGL[handle] = { vertexBuffer, indexBuffer, layout, vao };
 		return handle;
 	}
 
-	void GLGraphicsDevice::bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, int32_t index)
+	void GLGraphicsDevice::bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, const char *name, int32_t index)
 	{
 #ifdef _DEBUG
 		if (mBufferToGL[cBuffer].type != BufferType::eConstantBuffer)
 			assert(false);
 #endif
 		// Bind the uniform block to the shader program at index
-		glUniformBlockBinding(mShaderToGL[shader].program, index, mBufferToGL[cBuffer].buffer);
+		GLuint glIndex = glGetUniformBlockIndex(mShaderToGL[shader].program, name);
+		glUniformBlockBinding(mShaderToGL[shader].program, glIndex, index);
+		glBindBufferBase(GL_UNIFORM_BUFFER, index, mBufferToGL[cBuffer].buffer);
+		checkGLErrors();
 	}
 
 	void GLGraphicsDevice::deleteVertexInputLayout(LayoutHandle handle)
@@ -262,6 +289,9 @@ namespace Jikken
 		case CommandType::eUpdateBuffer:
 			_updateBufferCmd(static_cast<UpdateBufferCommand*>(cmd));
 			break;
+		case CommandType::eReallocBuffer:
+			_reallocBufferCmd(static_cast<ReallocBufferCommand*>(cmd));
+			break;
 		case CommandType::eDraw:
 			_drawCmd(static_cast<DrawCommand*>(cmd));
 			break;
@@ -295,6 +325,7 @@ namespace Jikken
 	void GLGraphicsDevice::_setShaderCmd(SetShaderCommand *cmd)
 	{
 		glUseProgram(mShaderToGL[cmd->handle].program);
+		checkGLErrors();
 	}
 
 	void GLGraphicsDevice::_updateBufferCmd(UpdateBufferCommand *cmd)
@@ -302,6 +333,20 @@ namespace Jikken
 		GLBuffer buffer = mBufferToGL[cmd->buffer];
 		glBindBuffer(bufferTypeToGL(buffer.type), buffer.buffer);
 		glBufferSubData(bufferTypeToGL(buffer.type), cmd->offset, cmd->dataSize, cmd->data);
+		checkGLErrors();
+	}
+
+	void GLGraphicsDevice::_reallocBufferCmd(ReallocBufferCommand *cmd)
+	{
+		GLBuffer buffer = mBufferToGL[cmd->buffer];
+		glBindBuffer(bufferTypeToGL(buffer.type), buffer.buffer);
+		glBufferData(
+			bufferTypeToGL(buffer.type), 
+			cmd->stride * cmd->count, 
+			cmd->data, 
+			bufferUsageHintToGL(cmd->hint)
+		);
+		checkGLErrors();
 	}
 
 	void GLGraphicsDevice::_drawCmd(DrawCommand *cmd)
@@ -309,7 +354,7 @@ namespace Jikken
 		GLenum primitive = drawPrimitiveToGL(cmd->primitive);
 
 		// Check if we are using indexed drawing.
-		if (mVertexArrayToGL[mCurrentVAO].ibo == 0)
+		if (mVertexArrayToGL[mCurrentVAO].ibo == InvalidHandle)
 		{
 			glDrawArrays(primitive, cmd->start, cmd->count);
 		}
@@ -325,6 +370,7 @@ namespace Jikken
 #pragma warning(pop)
 #endif
 		}
+		checkGLErrors();
 	}
 
 	void GLGraphicsDevice::_drawInstanceCmd(DrawInstanceCommand *cmd)
@@ -332,7 +378,7 @@ namespace Jikken
 		GLenum primitive = drawPrimitiveToGL(cmd->primitive);
 
 		// Check if we are using indexed drawing.
-		if (mVertexArrayToGL[mCurrentVAO].ibo == 0)
+		if (mVertexArrayToGL[mCurrentVAO].ibo == InvalidHandle)
 		{
 			glDrawArraysInstanced(primitive, cmd->start, cmd->count, cmd->instancedCount);
 		}
@@ -360,6 +406,7 @@ namespace Jikken
 		if (cmd->flag & ClearBufferFlags::eStencil)
 			flag |= GL_STENCIL_BUFFER_BIT;
 		glClear(flag);
+		checkGLErrors();
 	}
 
 	void GLGraphicsDevice::_bindVAOCmd(BindVAOCommand *cmd)
@@ -367,6 +414,7 @@ namespace Jikken
 		mCurrentVAO = cmd->vertexArray;
 		const GLVAO &vao = mVertexArrayToGL[mCurrentVAO];
 		glBindVertexArray(vao.vao);
+		checkGLErrors();
 	}
 
 	void GLGraphicsDevice::_viewportCmd(ViewportCommand *cmd)

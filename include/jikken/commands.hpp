@@ -36,6 +36,7 @@ namespace Jikken
 		eAbstract = 0,
 		eSetShader,
 		eUpdateBuffer,
+		eReallocBuffer,
 		eDraw,
 		eDrawInstance,
 		eClearBuffer,
@@ -73,12 +74,18 @@ namespace Jikken
 		BufferHandle buffer;
 		size_t offset;
 		size_t dataSize;
-		union
-		{
-			float *fData;
-			uint16_t *sData;
-			void *data;
-		};
+		void *data;
+	};
+
+	struct ReallocBufferCommand : public ICommand
+	{
+		ReallocBufferCommand();
+
+		BufferHandle buffer;
+		size_t stride;
+		size_t count;
+		void *data;
+		BufferUsageHint hint;
 	};
 
 	struct DrawCommand : public ICommand

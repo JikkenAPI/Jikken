@@ -34,9 +34,13 @@ namespace Jikken
 	{
 		friend class GraphicsDevice;
 	private:
-		CommandQueue()
+		CommandQueue(GraphicsDevice *owner) :
+			mCmdMemory(4096, 4),
+			mBufferMemory(MemoryPool::MEGABYTE * 4, 1)
 		{
 			mLastCmd = nullptr;
+			mFirstCmd = nullptr;
+			mDevice = owner;
 		}
 
 		~CommandQueue()
@@ -45,30 +49,45 @@ namespace Jikken
 		}
 
 	public:
+		// Allocates a new command.
 		template<class T>
 		inline T* alloc()
 		{
 			// Build up linked list.
-			ICommand *cmd = mMemory.malloc<T>();
+			ICommand *cmd = mCmdMemory.malloc<T>();
 			if (mLastCmd != nullptr)
 				mLastCmd->next = cmd;
+			else
+				mFirstCmd = cmd;
 			mLastCmd = cmd;
 			return static_cast<T*>(cmd);
 		}
 
+		// Copies data for the command.
+		void* memcpy(size_t size, void *data)
+		{
+			void *buffer = mBufferMemory.malloc(size);
+			std::memcpy(buffer, data, size);
+			return buffer;
+		}
+
 		inline ICommand* beginList()
 		{
-			return reinterpret_cast<ICommand*>(mMemory.getCommandQueuePtr());
+			return mFirstCmd;
 		}
 
 		inline void resetQueue()
 		{
-			mMemory.free();
+			mCmdMemory.free();
+			mBufferMemory.free();
 		}
 
 	private:
-		PerFrameMemoryPool mMemory;
+		MemoryPool mBufferMemory;
+		MemoryPool mCmdMemory;
 		ICommand *mLastCmd;
+		ICommand *mFirstCmd;
+		GraphicsDevice *mDevice;
 	};
 }
 
