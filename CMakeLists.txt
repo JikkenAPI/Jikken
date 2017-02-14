@@ -46,13 +46,16 @@ if (JIKKEN_VULKAN)
 		${JIKKEN_SRC}
 		src/vulkan/VulkanGraphicsDevice.cpp
 		src/vulkan/VulkanGraphicsDevice.hpp
+		src/vulkan/VulkanSwapChain.cpp
+		src/vulkan/VulkanSwapChain.hpp
 		src/vulkan/VulkanUtil.cpp
 		src/vulkan/VulkanUtil.hpp
 	)
 endif()
 
 add_library(Jikken STATIC ${JIKKEN_SRC})
-set(JIKKEN_INCLUDE ${JIKKEN_INCLUDE} include src)
+#glfw is only temp requirement while getting openblockcraft to work, remove me!
+set(JIKKEN_INCLUDE ${JIKKEN_INCLUDE} include src "${GAME_ROOT_DIR}/thirdparty/glfw/include")
 
 if (JIKKEN_OPENGL)
 	
@@ -74,8 +77,7 @@ endif()
 if (JIKKEN_VULKAN)
 	target_compile_definitions(Jikken PUBLIC JIKKEN_VULKAN)
 	#${VULKAN_XXX} is from glfw
-	#glfw is only temp requirement while getting openblockcraft to work, remove me!
-	set(JIKKEN_INCLUDE ${JIKKEN_INCLUDE} ${VULKAN_INCLUDE_DIR} "${GAME_ROOT_DIR}/thirdparty/glfw/include")
+	set(JIKKEN_INCLUDE ${JIKKEN_INCLUDE} ${VULKAN_INCLUDE_DIR})
 	set(JIKKEN_LIBS ${JIKKEN_LIBS} ${VULKAN_LIBRARY})
 	if(WIN32)
 		target_compile_definitions(Jikken PUBLIC VK_USE_PLATFORM_WIN32_KHR)
