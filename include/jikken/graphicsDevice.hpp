@@ -39,6 +39,7 @@ namespace Jikken
 	{
 		friend struct ICommand;
 	public:
+		GraphicsDevice();
 		virtual ~GraphicsDevice();
 
 		CommandQueue* createCommandQueue();
@@ -64,7 +65,6 @@ namespace Jikken
 		virtual void deleteShader(ShaderHandle handle) = 0;
 
 		virtual void submitCommandQueue(CommandQueue *queue) = 0;
-
 	protected:
 		std::vector<CommandQueue*> mCommandQueuePool;
 	};

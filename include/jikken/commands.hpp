@@ -74,12 +74,7 @@ namespace Jikken
 		BufferHandle buffer;
 		size_t offset;
 		size_t dataSize;
-		union
-		{
-			float *fData;
-			uint16_t *sData;
-			void *data;
-		};
+		void *data;
 	};
 
 	struct ReallocBufferCommand : public ICommand
