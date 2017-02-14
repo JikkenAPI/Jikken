@@ -46,7 +46,7 @@ namespace Jikken
 
 		virtual VertexArrayHandle createVAO(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer = 0) override;
 
-		virtual void bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, int32_t index) override;
+		virtual void bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, const char *name, int32_t index) override;
 
 		virtual void deleteVertexInputLayout(LayoutHandle handle) override;
 
@@ -69,7 +69,9 @@ namespace Jikken
 		VkPhysicalDevice mPhysicalDevice; //physical device
 		VkDevice mDevice; // logical device
 		VkQueue mGraphicsQueue; //graphics queue
+		VkQueue mComputeQueue; //compute queue
 		uint32_t mGraphicsQueueIndex; //graphics queue index
+		uint32_t mComputeQueueIndex;
 		VkDebugReportCallbackEXT mDebugCallback; //debug callback
 		VkAllocationCallbacks *mAllocCallback; //allocation callback
 

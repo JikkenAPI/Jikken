@@ -37,7 +37,9 @@ namespace Jikken
 		mPhysicalDevice(VK_NULL_HANDLE),
 		mDevice(VK_NULL_HANDLE),
 		mGraphicsQueue(VK_NULL_HANDLE),
+		mComputeQueue(VK_NULL_HANDLE),
 		mGraphicsQueueIndex(UINT32_MAX),
+		mComputeQueueIndex(UINT32_MAX),
 		mDebugCallback(VK_NULL_HANDLE),
 		mAllocCallback(nullptr)
 	{
@@ -50,6 +52,7 @@ namespace Jikken
 			vkDeviceWaitIdle(mDevice);
 
 		// cleanup other stuff
+
 
 		// destroy logical device
 		if (mDevice)
@@ -76,7 +79,7 @@ namespace Jikken
 		if (!glfwVulkanSupported())
 		{
 			std::printf("Vulkan is not supported\n");
-		//	return false;
+			return false;
 		}
 
 		//validation layers
@@ -238,16 +241,16 @@ namespace Jikken
 		for (const auto &device : physicalDevices)
 		{
 			//break on first acceptable device
-			if (vkutils::checkPhysicalDevice(device, mSurface, mGraphicsQueueIndex))
+			if (vkutils::checkPhysicalDevice(device, mSurface, mGraphicsQueueIndex,mComputeQueueIndex))
 			{
 				mPhysicalDevice = device;
 				break;
 			}
 		}
 
-		if (mGraphicsQueueIndex == UINT32_MAX)
+		if (mGraphicsQueueIndex == UINT32_MAX || mComputeQueueIndex == UINT32_MAX)
 		{
-			std::printf("Failed to find suitable graphics queue\n");
+			std::printf("Failed to find suitable graphics or compute queue\n");
 			return false;
 		}
 
@@ -302,12 +305,15 @@ namespace Jikken
 
 		//grab graphics queue handle
 		vkGetDeviceQueue(mDevice, mGraphicsQueueIndex, 0, &mGraphicsQueue);
+		//grab compute queue handle
+		vkGetDeviceQueue(mDevice, mComputeQueueIndex, 0, &mComputeQueue);
 
-		if (!mGraphicsQueue)
+		if (!mGraphicsQueue || mComputeQueue)
 		{
-			std::printf("Failed to retrieve graphics queue\n");
+			std::printf("Failed to retrieve graphics or compute queue\n");
 			return false;
 		}
+
 
 		return true;
 	}
@@ -332,7 +338,7 @@ namespace Jikken
 		return InvalidHandle;
 	}
 
-	void VulkanGraphicsDevice::bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, int32_t index)
+	void VulkanGraphicsDevice::bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, const char *name, int32_t index)
 	{
 	}
 

@@ -22,7 +22,7 @@
 // SOFTWARE.
 //-----------------------------------------------------------------------------
 
-#include "vulkan/vulkanUtil.hpp"
+#include "vulkan/VulkanUtil.hpp"
 
 namespace Jikken
 {
@@ -97,7 +97,7 @@ namespace Jikken
 			return false;
 		}
 
-		bool checkPhysicalDevice(const VkPhysicalDevice physicalDevice, const VkSurfaceKHR surface, uint32_t &graphicsQueue)
+		bool checkPhysicalDevice(const VkPhysicalDevice physicalDevice, const VkSurfaceKHR surface, uint32_t &graphicsQueue, uint32_t &computeQueue)
 		{
 			uint32_t extensionsCount = 0;
 			VkResult result = vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionsCount, nullptr);
@@ -137,10 +137,14 @@ namespace Jikken
 				VkBool32 supportsPresent;
 				vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &supportsPresent);
 				if (supportsPresent && (queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT))
-				{
 					graphicsQueue = i;
+
+				if (queueFamilyProperties[i].queueFlags & VK_QUEUE_COMPUTE_BIT)
+					computeQueue = i;
+
+				if (graphicsQueue != UINT32_MAX && computeQueue != UINT32_MAX)
 					return true;
-				}
+
 			}
 
 			return false;
