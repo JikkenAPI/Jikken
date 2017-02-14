@@ -66,6 +66,7 @@ namespace Jikken
 	bool GLGraphicsDevice::init(void *glfwWinHandle)
 	{
 		mWindowHandle = static_cast<GLFWwindow*>(glfwWinHandle);
+		glutils::printDeviceInfo();
 		return true;
 	}
 
@@ -97,7 +98,7 @@ namespace Jikken
 			fread(buffer, 1, static_cast<size_t>(fileSize), file);
 			fclose(file);
 
-			GLuint attachment = glCreateShader(shaderStageToGL(details.stage));
+			GLuint attachment = glCreateShader(glutils::shaderStageToGL(details.stage));
 			glShaderSource(attachment, 1, &buffer, 0);
 			glCompileShader(attachment);
 
@@ -164,8 +165,8 @@ namespace Jikken
 		GLuint buffer;
 
 		glGenBuffers(1, &buffer);
-		glBindBuffer(bufferTypeToGL(type), buffer);
-		glBufferData(bufferTypeToGL(type), dataSize, data, bufferUsageHintToGL(hint));
+		glBindBuffer(glutils::bufferTypeToGL(type), buffer);
+		glBufferData(glutils::bufferTypeToGL(type), dataSize, data, glutils::bufferUsageHintToGL(hint));
 		checkGLErrors();
 
 		mBufferToGL[handle] = { type, buffer };
@@ -216,7 +217,7 @@ namespace Jikken
 				glVertexAttribPointer(
 					attr.attribute, 
 					attr.componentSize, 
-					layoutTypeToGL(attr.type), 
+					glutils::layoutTypeToGL(attr.type),
 					GL_FALSE, 
 					attr.stride, 
 					reinterpret_cast<void*>(attr.offset)
@@ -331,27 +332,27 @@ namespace Jikken
 	void GLGraphicsDevice::_updateBufferCmd(UpdateBufferCommand *cmd)
 	{
 		GLBuffer buffer = mBufferToGL[cmd->buffer];
-		glBindBuffer(bufferTypeToGL(buffer.type), buffer.buffer);
-		glBufferSubData(bufferTypeToGL(buffer.type), cmd->offset, cmd->dataSize, cmd->data);
+		glBindBuffer(glutils::bufferTypeToGL(buffer.type), buffer.buffer);
+		glBufferSubData(glutils::bufferTypeToGL(buffer.type), cmd->offset, cmd->dataSize, cmd->data);
 		checkGLErrors();
 	}
 
 	void GLGraphicsDevice::_reallocBufferCmd(ReallocBufferCommand *cmd)
 	{
 		GLBuffer buffer = mBufferToGL[cmd->buffer];
-		glBindBuffer(bufferTypeToGL(buffer.type), buffer.buffer);
+		glBindBuffer(glutils::bufferTypeToGL(buffer.type), buffer.buffer);
 		glBufferData(
-			bufferTypeToGL(buffer.type), 
+			glutils::bufferTypeToGL(buffer.type),
 			cmd->stride * cmd->count, 
 			cmd->data, 
-			bufferUsageHintToGL(cmd->hint)
+			glutils::bufferUsageHintToGL(cmd->hint)
 		);
 		checkGLErrors();
 	}
 
 	void GLGraphicsDevice::_drawCmd(DrawCommand *cmd)
 	{
-		GLenum primitive = drawPrimitiveToGL(cmd->primitive);
+		GLenum primitive = glutils::drawPrimitiveToGL(cmd->primitive);
 
 		// Check if we are using indexed drawing.
 		if (mVertexArrayToGL[mCurrentVAO].ibo == InvalidHandle)
@@ -375,7 +376,7 @@ namespace Jikken
 
 	void GLGraphicsDevice::_drawInstanceCmd(DrawInstanceCommand *cmd)
 	{
-		GLenum primitive = drawPrimitiveToGL(cmd->primitive);
+		GLenum primitive = glutils::drawPrimitiveToGL(cmd->primitive);
 
 		// Check if we are using indexed drawing.
 		if (mVertexArrayToGL[mCurrentVAO].ibo == InvalidHandle)
@@ -441,7 +442,7 @@ namespace Jikken
 		// Next update the kind of blending we want to perform.
 		if (first || (cmd->source != mStateCache.blend.source || cmd->dest != mStateCache.blend.dest))
 		{
-			glBlendFunc(blendStateToGL(cmd->source), blendStateToGL(cmd->dest));
+			glBlendFunc(glutils::blendStateToGL(cmd->source), glutils::blendStateToGL(cmd->dest));
 			mStateCache.blend.source = cmd->source;
 			mStateCache.blend.dest = cmd->dest;
 		}
@@ -476,7 +477,7 @@ namespace Jikken
 		// Sets depth function.
 		if (first || (cmd->depthFunc != mStateCache.depthStencil.depthFunc))
 		{
-			glDepthFunc(depthFuncToGL(cmd->depthFunc));
+			glDepthFunc(glutils::depthFuncToGL(cmd->depthFunc));
 			mStateCache.depthStencil.depthFunc = cmd->depthFunc;
 		}
 

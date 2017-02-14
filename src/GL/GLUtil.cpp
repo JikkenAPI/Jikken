@@ -23,103 +23,114 @@
 //-----------------------------------------------------------------------------
 
 #include "GL/GLUtil.hpp"
+#include <iostream>
 
 namespace Jikken
 {
-	GLenum bufferUsageHintToGL(BufferUsageHint hint)
+	namespace glutils
 	{
-		switch (hint)
+		GLenum bufferUsageHintToGL(BufferUsageHint hint)
 		{
-		case BufferUsageHint::eStaticDraw:
-			return GL_STATIC_DRAW;
-		case BufferUsageHint::eDynamicDraw:
-			return GL_DYNAMIC_DRAW;
-		case BufferUsageHint::eStreamDraw:
-			return GL_STREAM_DRAW;
+			switch (hint)
+			{
+			case BufferUsageHint::eStaticDraw:
+				return GL_STATIC_DRAW;
+			case BufferUsageHint::eDynamicDraw:
+				return GL_DYNAMIC_DRAW;
+			case BufferUsageHint::eStreamDraw:
+				return GL_STREAM_DRAW;
+			}
 		}
-	}
 
-	GLenum bufferTypeToGL(BufferType type)
-	{
-		switch (type)
+		GLenum bufferTypeToGL(BufferType type)
 		{
-		case BufferType::eVertexBuffer:
-			return GL_ARRAY_BUFFER;
-		case BufferType::eIndexBuffer:
-			return GL_ELEMENT_ARRAY_BUFFER;
-		case BufferType::eConstantBuffer:
-			return GL_UNIFORM_BUFFER;
+			switch (type)
+			{
+			case BufferType::eVertexBuffer:
+				return GL_ARRAY_BUFFER;
+			case BufferType::eIndexBuffer:
+				return GL_ELEMENT_ARRAY_BUFFER;
+			case BufferType::eConstantBuffer:
+				return GL_UNIFORM_BUFFER;
+			}
 		}
-	}
 
-	GLenum layoutTypeToGL(VertexAttributeType type)
-	{
-		switch (type)
+		GLenum layoutTypeToGL(VertexAttributeType type)
 		{
-		case VertexAttributeType::eFLOAT:
-			return GL_FLOAT;
+			switch (type)
+			{
+			case VertexAttributeType::eFLOAT:
+				return GL_FLOAT;
+			}
 		}
-	}
 
-	GLenum shaderStageToGL(ShaderStage stage)
-	{
-		switch (stage)
+		GLenum shaderStageToGL(ShaderStage stage)
 		{
-		case ShaderStage::eVertex:
-			return GL_VERTEX_SHADER;
-		case ShaderStage::eFragment:
-			return GL_FRAGMENT_SHADER;
-		case ShaderStage::eGeometry:
-			return GL_GEOMETRY_SHADER;
+			switch (stage)
+			{
+			case ShaderStage::eVertex:
+				return GL_VERTEX_SHADER;
+			case ShaderStage::eFragment:
+				return GL_FRAGMENT_SHADER;
+			case ShaderStage::eGeometry:
+				return GL_GEOMETRY_SHADER;
+			}
 		}
-	}
 
-	GLenum drawPrimitiveToGL(PrimitiveType type)
-	{
-		switch (type)
+		GLenum drawPrimitiveToGL(PrimitiveType type)
 		{
-		case PrimitiveType::eTriangles:
-			return GL_TRIANGLES;
-		case PrimitiveType::eTriangleStrip:
-			return GL_TRIANGLE_STRIP;
-		case PrimitiveType::eLines:
-			return GL_LINES;
-		case PrimitiveType::eLineStrip:
-			return GL_LINE_STRIP;
+			switch (type)
+			{
+			case PrimitiveType::eTriangles:
+				return GL_TRIANGLES;
+			case PrimitiveType::eTriangleStrip:
+				return GL_TRIANGLE_STRIP;
+			case PrimitiveType::eLines:
+				return GL_LINES;
+			case PrimitiveType::eLineStrip:
+				return GL_LINE_STRIP;
+			}
 		}
-	}
 
-	GLenum blendStateToGL(BlendState state)
-	{
-		switch (state)
+		GLenum blendStateToGL(BlendState state)
 		{
-		case BlendState::eSrcAlpha:
-			return GL_SRC_ALPHA;
-		case BlendState::eOneMinusSrcAlpha:
-			return GL_ONE_MINUS_SRC_ALPHA;
+			switch (state)
+			{
+			case BlendState::eSrcAlpha:
+				return GL_SRC_ALPHA;
+			case BlendState::eOneMinusSrcAlpha:
+				return GL_ONE_MINUS_SRC_ALPHA;
+			}
 		}
-	}
 
-	GLenum depthFuncToGL(DepthFunc func)
-	{
-		switch (func)
+		GLenum depthFuncToGL(DepthFunc func)
 		{
-		case DepthFunc::eAlways:
-			return GL_ALWAYS;
-		case DepthFunc::eEqual:
-			return GL_EQUAL;
-		case DepthFunc::eGreater:
-			return GL_GREATER;
-		case DepthFunc::eGreaterEqual:
-			return GL_GEQUAL;
-		case DepthFunc::eLess:
-			return GL_LESS;
-		case DepthFunc::eLessEqual:
-			return GL_LEQUAL;
-		case DepthFunc::eNever:
-			return GL_NEVER;
-		case DepthFunc::eNotEqual:
-			return GL_NOTEQUAL;
+			switch (func)
+			{
+			case DepthFunc::eAlways:
+				return GL_ALWAYS;
+			case DepthFunc::eEqual:
+				return GL_EQUAL;
+			case DepthFunc::eGreater:
+				return GL_GREATER;
+			case DepthFunc::eGreaterEqual:
+				return GL_GEQUAL;
+			case DepthFunc::eLess:
+				return GL_LESS;
+			case DepthFunc::eLessEqual:
+				return GL_LEQUAL;
+			case DepthFunc::eNever:
+				return GL_NEVER;
+			case DepthFunc::eNotEqual:
+				return GL_NOTEQUAL;
+			}
+		}
+
+		void printDeviceInfo()
+		{
+			std::printf("Vendor: %s\n", glGetString(GL_VENDOR));
+			std::printf("Renderer: %s\n", glGetString(GL_RENDERER));
+			std::printf("Version: %s\n", glGetString(GL_VERSION));
 		}
 	}
 }

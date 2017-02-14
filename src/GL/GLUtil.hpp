@@ -30,13 +30,18 @@
 
 namespace Jikken
 {
-	GLenum bufferUsageHintToGL(BufferUsageHint hint);
-	GLenum bufferTypeToGL(BufferType type);
-	GLenum layoutTypeToGL(VertexAttributeType type);
-	GLenum shaderStageToGL(ShaderStage stage);
-	GLenum drawPrimitiveToGL(PrimitiveType type);
-	GLenum blendStateToGL(BlendState state);
-	GLenum depthFuncToGL(DepthFunc func);
+	namespace glutils
+	{
+		GLenum bufferUsageHintToGL(BufferUsageHint hint);
+		GLenum bufferTypeToGL(BufferType type);
+		GLenum layoutTypeToGL(VertexAttributeType type);
+		GLenum shaderStageToGL(ShaderStage stage);
+		GLenum drawPrimitiveToGL(PrimitiveType type);
+		GLenum blendStateToGL(BlendState state);
+		GLenum depthFuncToGL(DepthFunc func);
+
+		void printDeviceInfo();
+	}
 }
 
 #endif
