@@ -40,6 +40,7 @@ namespace Jikken
 		mComputeQueue(VK_NULL_HANDLE),
 		mGraphicsQueueIndex(UINT32_MAX),
 		mComputeQueueIndex(UINT32_MAX),
+		mRenderPass(VK_NULL_HANDLE),
 		mDebugCallback(VK_NULL_HANDLE),
 		mAllocCallback(nullptr)
 	{
@@ -51,8 +52,9 @@ namespace Jikken
 		if (mDevice)
 			vkDeviceWaitIdle(mDevice);
 
-		// cleanup other stuff
-
+		// destroy render pass
+		if (mRenderPass)
+			vkDestroyRenderPass(mDevice, mRenderPass, mAllocCallback);
 
 		// destroy logical device
 		if (mDevice)
@@ -308,12 +310,76 @@ namespace Jikken
 		//grab compute queue handle
 		vkGetDeviceQueue(mDevice, mComputeQueueIndex, 0, &mComputeQueue);
 
-		if (!mGraphicsQueue || mComputeQueue)
+		if (!mGraphicsQueue || !mComputeQueue)
 		{
 			std::printf("Failed to retrieve graphics or compute queue\n");
 			return false;
 		}
 
+		//setup backbuffer and render pass
+		VkAttachmentDescription backBufAttachmentDesc[2];
+		//color
+		backBufAttachmentDesc[0].flags = 0;
+		backBufAttachmentDesc[0].format = VK_FORMAT_B8G8R8A8_UNORM;
+		backBufAttachmentDesc[0].samples = VK_SAMPLE_COUNT_1_BIT;
+		backBufAttachmentDesc[0].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		backBufAttachmentDesc[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		backBufAttachmentDesc[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		backBufAttachmentDesc[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		backBufAttachmentDesc[0].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		backBufAttachmentDesc[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		//depth/stencil
+		backBufAttachmentDesc[1].flags = 0;
+		backBufAttachmentDesc[1].format = VK_FORMAT_D24_UNORM_S8_UINT;
+		backBufAttachmentDesc[1].samples = VK_SAMPLE_COUNT_1_BIT;
+		backBufAttachmentDesc[1].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		backBufAttachmentDesc[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		backBufAttachmentDesc[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		backBufAttachmentDesc[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		backBufAttachmentDesc[1].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		backBufAttachmentDesc[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		//attachment reference
+		VkAttachmentReference attacmentRefs[3];
+		//color
+		attacmentRefs[0].attachment = 0;
+		attacmentRefs[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		//resolve
+		attacmentRefs[1].attachment = VK_ATTACHMENT_UNUSED;
+		attacmentRefs[1].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		//depth/stencil
+		attacmentRefs[2].attachment = 1;
+		attacmentRefs[2].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		VkSubpassDescription subpassDesc;
+		subpassDesc.flags = 0;
+		subpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpassDesc.inputAttachmentCount = 0;
+		subpassDesc.pInputAttachments = VK_NULL_HANDLE;
+		subpassDesc.colorAttachmentCount = 1;
+		subpassDesc.pColorAttachments = &attacmentRefs[0];
+		subpassDesc.pResolveAttachments = &attacmentRefs[1];
+		subpassDesc.pDepthStencilAttachment = &attacmentRefs[2];
+		subpassDesc.preserveAttachmentCount = 0;
+		subpassDesc.pPreserveAttachments = nullptr;
+
+		VkRenderPassCreateInfo renderPassInfo;
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		renderPassInfo.pNext = nullptr;
+		renderPassInfo.flags = 0;
+		renderPassInfo.attachmentCount = 2;
+		renderPassInfo.pAttachments = backBufAttachmentDesc;
+		renderPassInfo.subpassCount = 1;
+		renderPassInfo.pSubpasses = &subpassDesc;
+		renderPassInfo.dependencyCount = 0;
+		renderPassInfo.pDependencies = VK_NULL_HANDLE;
+
+		result = vkCreateRenderPass(mDevice, &renderPassInfo, mAllocCallback, &mRenderPass);
+		if (result != VK_SUCCESS)
+		{
+			std::printf("vkCreateRenderPass failed\n");
+			return false;
+		}
 
 		return true;
 	}

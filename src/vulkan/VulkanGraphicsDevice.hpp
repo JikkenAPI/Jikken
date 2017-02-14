@@ -71,7 +71,8 @@ namespace Jikken
 		VkQueue mGraphicsQueue; //graphics queue
 		VkQueue mComputeQueue; //compute queue
 		uint32_t mGraphicsQueueIndex; //graphics queue index
-		uint32_t mComputeQueueIndex;
+		uint32_t mComputeQueueIndex; // compute queue index
+		VkRenderPass mRenderPass; //render pass
 		VkDebugReportCallbackEXT mDebugCallback; //debug callback
 		VkAllocationCallbacks *mAllocCallback; //allocation callback
 
