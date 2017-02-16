@@ -31,6 +31,7 @@ namespace Jikken
 	{
 		GLenum bufferUsageHintToGL(BufferUsageHint hint)
 		{
+			
 			switch (hint)
 			{
 			case BufferUsageHint::eStaticDraw:
@@ -39,6 +40,8 @@ namespace Jikken
 				return GL_DYNAMIC_DRAW;
 			case BufferUsageHint::eStreamDraw:
 				return GL_STREAM_DRAW;
+			default:
+				return GL_INVALID_ENUM;
 			}
 		}
 
@@ -52,6 +55,8 @@ namespace Jikken
 				return GL_ELEMENT_ARRAY_BUFFER;
 			case BufferType::eConstantBuffer:
 				return GL_UNIFORM_BUFFER;
+			default:
+				return GL_INVALID_ENUM;
 			}
 		}
 
@@ -61,6 +66,8 @@ namespace Jikken
 			{
 			case VertexAttributeType::eFLOAT:
 				return GL_FLOAT;
+			default:
+				return GL_INVALID_ENUM;
 			}
 		}
 
@@ -74,6 +81,8 @@ namespace Jikken
 				return GL_FRAGMENT_SHADER;
 			case ShaderStage::eGeometry:
 				return GL_GEOMETRY_SHADER;
+			default:
+				return GL_INVALID_ENUM;
 			}
 		}
 
@@ -89,6 +98,8 @@ namespace Jikken
 				return GL_LINES;
 			case PrimitiveType::eLineStrip:
 				return GL_LINE_STRIP;
+			default:
+				return GL_INVALID_ENUM;
 			}
 		}
 
@@ -100,6 +111,8 @@ namespace Jikken
 				return GL_SRC_ALPHA;
 			case BlendState::eOneMinusSrcAlpha:
 				return GL_ONE_MINUS_SRC_ALPHA;
+			default:
+				return GL_INVALID_ENUM;
 			}
 		}
 
@@ -123,6 +136,8 @@ namespace Jikken
 				return GL_NEVER;
 			case DepthFunc::eNotEqual:
 				return GL_NOTEQUAL;
+			default:
+				return GL_INVALID_ENUM;
 			}
 		}
 
