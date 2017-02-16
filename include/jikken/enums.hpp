@@ -29,20 +29,20 @@
 
 namespace Jikken
 {
-	enum class API
+	enum class API : uint8_t
 	{
 		eNull,
 		eOpenGL,
 		eVulkan
 	};
 
-	enum class BlendState
+	enum class BlendState : uint8_t
 	{
 		eSrcAlpha = 0,
 		eOneMinusSrcAlpha
 	};
 
-	enum class DepthFunc
+	enum class DepthFunc : uint8_t
 	{
 		eNever = 0,
 		eAlways,
@@ -54,19 +54,19 @@ namespace Jikken
 		eGreaterEqual
 	};
 
-	enum class CullFaceState
+	enum class CullFaceState : uint8_t
 	{
 		eFront = 0,
 		eBack
 	};
 
-	enum class WindingOrderState
+	enum class WindingOrderState : uint8_t
 	{
 		eCW = 0,
 		eCCW
 	};
 
-	enum class PrimitiveType
+	enum class PrimitiveType : uint8_t
 	{
 		eTriangles = 0,
 		eTriangleStrip,
@@ -74,7 +74,7 @@ namespace Jikken
 		eLineStrip
 	};
 
-	enum class ShaderStage
+	enum class ShaderStage : uint8_t
 	{
 		eVertex = 0,
 		eFragment,
@@ -89,14 +89,14 @@ namespace Jikken
 		eStencil = 4
 	};
 
-	enum class BufferType
+	enum class BufferType : uint8_t
 	{
 		eVertexBuffer = 0,
 		eIndexBuffer,
 		eConstantBuffer
 	};
 
-	enum class BufferUsageHint
+	enum class BufferUsageHint : uint8_t
 	{
 		eStaticDraw = 0,
 		eDynamicDraw,

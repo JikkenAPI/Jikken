@@ -56,11 +56,22 @@ namespace Jikken
 
 		virtual void deleteShader(ShaderHandle handle) override;
 
-		virtual void submitCommandQueue(CommandQueue *queue) override;
-
 		virtual bool init(void *glfwWinHandle) override;
 
 		virtual void present() override;
+
+	protected:
+		virtual void _setShaderCmd(SetShaderCommand *cmd) override {};
+		virtual void _updateBufferCmd(UpdateBufferCommand *cmd) override {};
+		virtual void _reallocBufferCmd(ReallocBufferCommand *cmd) override {};
+		virtual void _drawCmd(DrawCommand *cmd) override {};
+		virtual void _drawInstanceCmd(DrawInstanceCommand *cmd) override {};
+		virtual void _clearBufferCmd(ClearBufferCommand *cmd) override {};
+		virtual void _bindVAOCmd(BindVAOCommand *cmd) override {};
+		virtual void _viewportCmd(ViewportCommand *cmd) override {};
+		virtual void _blendStateCmd(BlendStateCommand *cmd) override {};
+		virtual void _depthStencilStateCmd(DepthStencilStateCommand *cmd) override {};
+		virtual void _cullStateCmd(CullStateCommand *cmd) override {};
 
 	private:
 

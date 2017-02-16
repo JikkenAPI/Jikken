@@ -28,68 +28,153 @@
 #include "jikken/commands.hpp"
 #include "jikken/memory.hpp"
 
+#define MAX_COMMAND_BUFFER_SIZE (64<<10)
+
+//TODO mCmdMemory & mBufferMemory pools
 namespace Jikken
 {
 	class CommandQueue
 	{
 		friend class GraphicsDevice;
 	private:
-		CommandQueue(GraphicsDevice *owner) :
+		CommandQueue() :
+			mPos(0),
+			mSize(MAX_COMMAND_BUFFER_SIZE),
 			mCmdMemory(4096, 4),
 			mBufferMemory(MemoryPool::MEGABYTE * 4, 1)
 		{
-			mLastCmd = nullptr;
-			mFirstCmd = nullptr;
-			mDevice = owner;
+			finish();
 		}
 
 		~CommandQueue()
 		{
+		}
 
+
+	private:
+
+		inline void write(const void* data, size_t size)
+		{
+			memcpy(&mBuffer[mPos], data, size);
+			mPos += size;
+		}
+
+		template<typename T>
+		inline void write(const T& _in)
+		{
+			write(reinterpret_cast<const uint8_t*>(&_in), sizeof(T));
 		}
 
 	public:
-		// Allocates a new command.
-		template<class T>
-		inline T* alloc()
+
+		inline void reset()
 		{
-			// Build up linked list.
-			ICommand *cmd = mCmdMemory.malloc<T>();
-			if (mLastCmd != nullptr)
-				mLastCmd->next = cmd;
-			else
-				mFirstCmd = cmd;
-			mLastCmd = cmd;
-			return static_cast<T*>(cmd);
+			mPos = 0;
 		}
 
-		// Copies data for the command.
-		void* memcpy(size_t size, void *data)
+		inline void finish()
 		{
-			void *buffer = mBufferMemory.malloc(size);
-			std::memcpy(buffer, data, size);
-			return buffer;
+			uint8_t finish = eFinishQueue;
+			write(finish);
+			mSize = mPos;
+			mPos = 0;
 		}
 
-		inline ICommand* beginList()
+		inline void read(void* data, size_t size)
 		{
-			return mFirstCmd;
+			memcpy(data, &mBuffer[mPos], size);
+			mPos += size;
 		}
 
-		inline void resetQueue()
+		template<typename T>
+		inline void read(T& _in)
 		{
-			mLastCmd = nullptr;
-			mFirstCmd = nullptr;
-			mCmdMemory.free();
-			mBufferMemory.free();
+			read(reinterpret_cast<uint8_t*>(&_in), sizeof(T));
 		}
+
+		void skip(size_t size)
+		{
+			mPos += size;
+		}
+
+		//add/record commands to the queue
+		inline void addSetShaderCommand(const SetShaderCommand *cmd)
+		{
+			write(eSetShader);
+			write(cmd,sizeof(SetShaderCommand));
+		}
+
+		inline void addUpdateBufferCommand(const UpdateBufferCommand *cmd)
+		{
+			write(eUpdateBuffer);
+			write(cmd->buffer);
+			write(cmd->dataSize);
+			write(cmd->offset);
+			//write data pointer address
+			uintptr_t addr = reinterpret_cast<uintptr_t>(&mBuffer[mPos + sizeof(uintptr_t)]);
+			write(addr);
+			//write data
+			write(cmd->data, cmd->dataSize);
+		}
+
+		inline void addReallocBufferCommand(const ReallocBufferCommand *cmd)
+		{
+			write(eReallocBuffer);
+			write(cmd->buffer);
+			write(cmd->count);
+			write(cmd->hint);
+			write(cmd->stride);
+			//write data pointer address
+			uintptr_t addr = reinterpret_cast<uintptr_t>(&mBuffer[mPos + sizeof(uintptr_t)]);
+			write(addr);
+			//write data
+			write(cmd->data, cmd->stride * cmd->count);
+		}
+
+		inline void addClearCommand(const ClearBufferCommand *cmd)
+		{
+			write(eClearBuffer);
+			write(cmd, sizeof(ClearBufferCommand));
+		}
+
+		inline void addDepthStencilStateCommand(const DepthStencilStateCommand *cmd)
+		{
+			write(eDepthStencilState);
+			write(cmd, sizeof(DepthStencilStateCommand));
+		}
+
+		inline void addBlendStateCommand(const BlendStateCommand *cmd)
+		{
+			write(eBlendState);
+			write(cmd, sizeof(BlendStateCommand));
+		}
+
+		inline void addCullStateCommand(const CullStateCommand *cmd)
+		{
+			write(eCullState);
+			write(cmd, sizeof(CullStateCommand));
+		}
+
+		inline void addBindVAOCommand(const BindVAOCommand *cmd) 
+		{
+			write(eBindVAO);
+			write(cmd, sizeof(BindVAOCommand));
+		}
+
+		inline void addDrawCommand(const DrawCommand *cmd)
+		{
+			write(eDraw);
+			write(cmd, sizeof(DrawCommand));
+		}
+
 
 	private:
+		uintptr_t mPos;
+		size_t mSize;
+		uint8_t mBuffer[MAX_COMMAND_BUFFER_SIZE];
+		//TODO mCmdMemory & mBufferMemory pools to replace above mBuffer
 		MemoryPool mBufferMemory;
 		MemoryPool mCmdMemory;
-		ICommand *mLastCmd;
-		ICommand *mFirstCmd;
-		GraphicsDevice *mDevice;
 	};
 }
 

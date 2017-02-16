@@ -272,57 +272,6 @@ namespace Jikken
 		mShaderToGL.erase(handle);
 	}
 
-	void GLGraphicsDevice::submitCommandQueue(CommandQueue *cmdQueue)
-	{
-		// Process all commands and then clear the queue so it can be filled again.
-		for (ICommand *cmd = cmdQueue->beginList(); cmd != nullptr; cmd = cmd->next)
-			_processCmd(cmd);
-		cmdQueue->resetQueue();
-	}
-
-	void GLGraphicsDevice::_processCmd(ICommand *cmd)
-	{
-		switch (cmd->commandType)
-		{
-		case CommandType::eSetShader:
-			_setShaderCmd(static_cast<SetShaderCommand*>(cmd));
-			break;
-		case CommandType::eUpdateBuffer:
-			_updateBufferCmd(static_cast<UpdateBufferCommand*>(cmd));
-			break;
-		case CommandType::eReallocBuffer:
-			_reallocBufferCmd(static_cast<ReallocBufferCommand*>(cmd));
-			break;
-		case CommandType::eDraw:
-			_drawCmd(static_cast<DrawCommand*>(cmd));
-			break;
-		case CommandType::eDrawInstance:
-			_drawInstanceCmd(static_cast<DrawInstanceCommand*>(cmd));
-			break;
-		case CommandType::eClearBuffer:
-			_clearBufferCmd(static_cast<ClearBufferCommand*>(cmd));
-			break;
-		case CommandType::eBindVAO:
-			_bindVAOCmd(static_cast<BindVAOCommand*>(cmd));
-			break;
-		case CommandType::eViewport:
-			_viewportCmd(static_cast<ViewportCommand*>(cmd));
-			break;
-		case CommandType::eBlendState:
-			_blendStateCmd(static_cast<BlendStateCommand*>(cmd));
-			break;
-		case CommandType::eDepthStencilState:
-			_depthStencilStateCmd(static_cast<DepthStencilStateCommand*>(cmd));
-			break;
-		case CommandType::eCullState:
-			_cullStateCmd(static_cast<CullStateCommand*>(cmd));
-			break;
-		default:
-			printf("Invalid command to process in GLGraphicsDevice: %i", cmd->commandType);
-			break;
-		}
-	}
-
 	void GLGraphicsDevice::_setShaderCmd(SetShaderCommand *cmd)
 	{
 		glUseProgram(mShaderToGL[cmd->handle].program);

@@ -42,7 +42,7 @@ namespace Jikken
 
 	CommandQueue* GraphicsDevice::createCommandQueue()
 	{
-		CommandQueue *queue = new CommandQueue(this);
+		CommandQueue *queue = new CommandQueue;
 		mCommandQueuePool.push_back(queue);
 		return queue;
 	}
@@ -53,5 +53,139 @@ namespace Jikken
 		mCommandQueuePool.erase(pos);
 		delete cmdQueue;
 		cmdQueue = nullptr;
+	}
+
+	void GraphicsDevice::submitCommandQueue(CommandQueue *queue)
+	{
+		//mark queue as finished (i.e write eFinishQueue)
+		queue->finish();
+
+	    //decode all commands and execute them
+		bool queueEnd = false;
+		while (!queueEnd)
+		{
+			uint8_t cmdType;
+			queue->read(cmdType);
+			switch (cmdType)
+			{
+			case eSetShader:
+			{
+				SetShaderCommand cmd;
+				queue->read(cmd);
+				//execute cmd
+				_setShaderCmd(&cmd);
+				break;
+			}
+
+			case eDepthStencilState:
+			{
+				DepthStencilStateCommand cmd;
+				queue->read(cmd);
+				//execute cmd
+				_depthStencilStateCmd(&cmd);
+				break;
+			}
+
+			case eDraw:
+			{
+				DrawCommand cmd;
+				queue->read(cmd);
+				//execute cmd
+				_drawCmd(&cmd);
+				break;
+			}
+
+			case eUpdateBuffer:
+			{
+				UpdateBufferCommand cmd;
+				queue->read(cmd.buffer);
+				queue->read(cmd.dataSize);
+				queue->read(cmd.offset);
+				//read data pointer address
+				uintptr_t addr;
+				queue->read(addr);
+				cmd.data = reinterpret_cast<void*>(addr);
+				//skip past the data
+				queue->skip(cmd.dataSize);
+				//execute cmd
+				_updateBufferCmd(&cmd);
+				break;
+			}
+
+			case eReallocBuffer:
+			{
+				ReallocBufferCommand cmd;
+				queue->read(cmd.buffer);
+				queue->read(cmd.count);
+				queue->read(cmd.hint);
+				queue->read(cmd.stride);
+				//read data pointer address
+				uintptr_t addr;
+				queue->read(addr);
+				cmd.data = reinterpret_cast<void*>(addr);
+				//skip past the data
+				queue->skip(cmd.stride * cmd.count);
+				//execute cmd
+				_reallocBufferCmd(&cmd);
+				break;
+			}
+
+			case eBindVAO:
+			{
+				BindVAOCommand cmd;
+				queue->read(cmd);
+				//execute cmd
+				_bindVAOCmd(&cmd);
+				break;
+			}
+
+			case eCullState:
+			{
+				CullStateCommand cmd;
+				queue->read(cmd);
+				//execute cmd
+				_cullStateCmd(&cmd);
+				break;
+			}
+
+			case eClearBuffer:
+			{
+				ClearBufferCommand cmd;
+				queue->read(cmd);
+				//execute cmd
+				_clearBufferCmd(&cmd);
+				break;
+			}
+
+			case eBlendState:
+			{
+				BlendStateCommand cmd;
+				queue->read(cmd);
+				//execute cmd
+				_blendStateCmd(&cmd);
+				break;
+			}
+
+			case eViewport:
+			{
+				ViewportCommand cmd;
+				queue->read(cmd);
+				//execute cmd
+				_viewportCmd(&cmd);
+				break;
+			}
+
+			case eFinishQueue:
+				queueEnd = true;
+				break;
+
+			default:
+				assert(false);
+				break;
+			}
+		}
+
+		//reset queue so it can be used again
+		queue->reset();
 	}
 }

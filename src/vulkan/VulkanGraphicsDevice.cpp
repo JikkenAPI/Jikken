@@ -330,7 +330,7 @@ namespace Jikken
 		backBufAttachmentDesc[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		//depth/stencil
 		backBufAttachmentDesc[1].flags = 0;
-		backBufAttachmentDesc[1].format = VK_FORMAT_D24_UNORM_S8_UINT;
+		backBufAttachmentDesc[1].format = VK_FORMAT_D24_UNORM_S8_UINT; //VK_FORMAT_D32_SFLOAT_S8_UINT
 		backBufAttachmentDesc[1].samples = VK_SAMPLE_COUNT_1_BIT;
 		backBufAttachmentDesc[1].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		backBufAttachmentDesc[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -421,10 +421,6 @@ namespace Jikken
 	}
 
 	void VulkanGraphicsDevice::deleteShader(ShaderHandle handle)
-	{
-	}
-
-	void VulkanGraphicsDevice::submitCommandQueue(CommandQueue *cmdQueue)
 	{
 	}
 

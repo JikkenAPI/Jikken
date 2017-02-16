@@ -64,12 +64,25 @@ namespace Jikken
 
 		virtual void deleteShader(ShaderHandle handle) = 0;
 
-		virtual void submitCommandQueue(CommandQueue *queue) = 0;
+		void submitCommandQueue(CommandQueue *queue);
 		virtual bool init(void *glfwWinHandle) = 0;
 
 		virtual void present() = 0;
 
 	protected:
+		//queue exec functions
+
+		virtual void _setShaderCmd(SetShaderCommand *cmd) = 0;
+		virtual void _updateBufferCmd(UpdateBufferCommand *cmd) = 0;
+		virtual void _reallocBufferCmd(ReallocBufferCommand *cmd) = 0;
+		virtual void _drawCmd(DrawCommand *cmd) = 0;
+		virtual void _drawInstanceCmd(DrawInstanceCommand *cmd) = 0;
+		virtual void _clearBufferCmd(ClearBufferCommand *cmd) = 0;
+		virtual void _bindVAOCmd(BindVAOCommand *cmd) = 0;
+		virtual void _viewportCmd(ViewportCommand *cmd) = 0;
+		virtual void _blendStateCmd(BlendStateCommand *cmd) = 0;
+		virtual void _depthStencilStateCmd(DepthStencilStateCommand *cmd) = 0;
+		virtual void _cullStateCmd(CullStateCommand *cmd) = 0;
 		std::vector<CommandQueue*> mCommandQueuePool;
 	};
 }

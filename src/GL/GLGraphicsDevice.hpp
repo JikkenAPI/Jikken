@@ -76,26 +76,23 @@ namespace Jikken
 
 		virtual void deleteShader(ShaderHandle handle) override;
 
-		virtual void submitCommandQueue(CommandQueue *queue) override;
-
 		virtual bool init(void *glfwWinHandle) override;
 
 		virtual void present() override;
 
 	protected:
-		void _processCmd(ICommand *cmd);
 
-		void _setShaderCmd(SetShaderCommand *cmd);
-		void _updateBufferCmd(UpdateBufferCommand *cmd);
-		void _reallocBufferCmd(ReallocBufferCommand *cmd);
-		void _drawCmd(DrawCommand *cmd);
-		void _drawInstanceCmd(DrawInstanceCommand *cmd);
-		void _clearBufferCmd(ClearBufferCommand *cmd);
-		void _bindVAOCmd(BindVAOCommand *cmd);
-		void _viewportCmd(ViewportCommand *cmd);
-		void _blendStateCmd(BlendStateCommand *cmd);
-		void _depthStencilStateCmd(DepthStencilStateCommand *cmd);
-		void _cullStateCmd(CullStateCommand *cmd);
+		virtual void _setShaderCmd(SetShaderCommand *cmd) override;
+		virtual void _updateBufferCmd(UpdateBufferCommand *cmd) override;
+		virtual void _reallocBufferCmd(ReallocBufferCommand *cmd) override;
+		virtual void _drawCmd(DrawCommand *cmd) override;
+		virtual void _drawInstanceCmd(DrawInstanceCommand *cmd) override;
+		virtual void _clearBufferCmd(ClearBufferCommand *cmd) override;
+		virtual void _bindVAOCmd(BindVAOCommand *cmd) override;
+		virtual void _viewportCmd(ViewportCommand *cmd) override;
+		virtual void _blendStateCmd(BlendStateCommand *cmd) override;
+		virtual void _depthStencilStateCmd(DepthStencilStateCommand *cmd) override;
+		virtual void _cullStateCmd(CullStateCommand *cmd) override;
 
 		std::unordered_map<BufferHandle, GLBuffer> mBufferToGL;
 		std::unordered_map<VertexArrayHandle, GLVAO> mVertexArrayToGL;

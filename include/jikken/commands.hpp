@@ -31,10 +31,9 @@
 
 namespace Jikken
 {
-	enum CommandType : uint32_t
+	enum CommandType : uint8_t
 	{
-		eAbstract = 0,
-		eSetShader,
+		eSetShader=0,
 		eUpdateBuffer,
 		eReallocBuffer,
 		eDraw,
@@ -44,43 +43,25 @@ namespace Jikken
 		eViewport,
 		eBlendState,
 		eDepthStencilState,
-		eCullState
+		eCullState,
+		eFinishQueue //special value, doesn't need command struct
 	};
 
-	struct ICommand
+	struct SetShaderCommand 
 	{
-		friend class CommandQueue;
-		friend class PerFrameMemoryPool;
-		friend class GraphicsDevice;
-		friend class GLGraphicsDevice;
-
-		ICommand();
-
-	protected:
-		CommandType commandType;
-		ICommand *next;
-	};
-
-	struct SetShaderCommand : public ICommand
-	{
-		SetShaderCommand();
 		ShaderHandle handle;
 	};
 
-	struct UpdateBufferCommand : public ICommand
+	struct UpdateBufferCommand
 	{
-		UpdateBufferCommand();
-
 		BufferHandle buffer;
 		size_t offset;
 		size_t dataSize;
 		void *data;
 	};
 
-	struct ReallocBufferCommand : public ICommand
+	struct ReallocBufferCommand
 	{
-		ReallocBufferCommand();
-
 		BufferHandle buffer;
 		size_t stride;
 		size_t count;
@@ -88,71 +69,56 @@ namespace Jikken
 		BufferUsageHint hint;
 	};
 
-	struct DrawCommand : public ICommand
+	struct DrawCommand
 	{
-		DrawCommand();
-
 		PrimitiveType primitive;
 		uint32_t start;
 		uint32_t count;
 	};
 
-	struct DrawInstanceCommand : public ICommand
+	struct DrawInstanceCommand
 	{
-		DrawInstanceCommand();
-
 		PrimitiveType primitive;
 		uint32_t start;
 		uint32_t count;
 		uint32_t instancedCount;
 	};
 
-	struct ClearBufferCommand : public ICommand
+	struct ClearBufferCommand
 	{
-		ClearBufferCommand();
 		uint32_t flag;
 	};
 
-	struct BindVAOCommand : public ICommand
+	struct BindVAOCommand
 	{
-		BindVAOCommand();
-
 		VertexArrayHandle vertexArray;
 	};
 
-	struct ViewportCommand : public ICommand
+	struct ViewportCommand
 	{
-		ViewportCommand();
-
-		int32_t x;
-		int32_t y;
-		int32_t width;
-		int32_t height;
+		int16_t x;
+		int16_t y;
+		int16_t width;
+		int16_t height;
 	};
 
-	struct BlendStateCommand : public ICommand
+	struct BlendStateCommand
 	{
-		BlendStateCommand();
-
 		bool enabled;
 		BlendState source;
 		BlendState dest;
 	};
 
 	// Right now, just depth. TODO: add stencil
-	struct DepthStencilStateCommand : public ICommand
+	struct DepthStencilStateCommand 
 	{
-		DepthStencilStateCommand();
-
 		bool depthEnabled;
 		bool depthWrite;
 		DepthFunc depthFunc;
 	};
 
-	struct CullStateCommand : public ICommand
+	struct CullStateCommand
 	{
-		CullStateCommand();
-
 		bool enabled;
 		CullFaceState face;
 		WindingOrderState state;
