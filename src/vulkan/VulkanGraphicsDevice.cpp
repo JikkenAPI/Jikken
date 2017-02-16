@@ -88,7 +88,7 @@ namespace Jikken
 	#ifdef _DEBUG
 		bool validationLayersEnabled = true;
 	#else
-		bool validationLayersEnabled = false
+		bool validationLayersEnabled = false;
 	#endif
 
 		//grab vulkan instance extension list
