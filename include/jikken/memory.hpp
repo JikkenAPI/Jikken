@@ -27,6 +27,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include <cstddef>
 #include <vector>
 
 namespace Jikken
@@ -88,7 +89,7 @@ namespace Jikken
 
 	/// A custom memory allocator that operates as if it was on a stack.
 	/// Once a page fills up within the pool, a new page is generated.
-	/// Page references to the next page are stored as the last 
+	/// Page references to the next page are stored as the last
 	/// sizeof(uintptr_t) bytes on the current page.
 	/// Once free() is called, all memory is considered to be reset.
 	class MemoryPool

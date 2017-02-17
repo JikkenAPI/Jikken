@@ -46,8 +46,6 @@ if (JIKKEN_VULKAN)
 		${JIKKEN_SRC}
 		src/vulkan/VulkanGraphicsDevice.cpp
 		src/vulkan/VulkanGraphicsDevice.hpp
-		src/vulkan/VulkanSwapChain.cpp
-		src/vulkan/VulkanSwapChain.hpp
 		src/vulkan/VulkanUtil.cpp
 		src/vulkan/VulkanUtil.hpp
 	)

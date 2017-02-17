@@ -27,6 +27,7 @@
 
 #include "jikken/commands.hpp"
 #include "jikken/memory.hpp"
+#include <cstring>
 
 #define MAX_COMMAND_BUFFER_SIZE (64<<10)
 
@@ -155,7 +156,7 @@ namespace Jikken
 			write(cmd, sizeof(CullStateCommand));
 		}
 
-		inline void addBindVAOCommand(const BindVAOCommand *cmd) 
+		inline void addBindVAOCommand(const BindVAOCommand *cmd)
 		{
 			write(eBindVAO);
 			write(cmd, sizeof(BindVAOCommand));

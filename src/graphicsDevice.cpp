@@ -23,6 +23,7 @@
 //-----------------------------------------------------------------------------
 
 #include "jikken/graphicsDevice.hpp"
+#include <algorithm>
 
 namespace Jikken
 {
