@@ -66,13 +66,13 @@ namespace Jikken
 		while (!queueEnd)
 		{
 			uint8_t cmdType;
-			queue->read(cmdType);
+			queue->readCmd(&cmdType,sizeof(uint8_t));
 			switch (cmdType)
 			{
 			case eSetShader:
 			{
 				SetShaderCommand cmd;
-				queue->read(cmd);
+				queue->readCmd(cmd);
 				//execute cmd
 				_setShaderCmd(&cmd);
 				break;
@@ -81,7 +81,7 @@ namespace Jikken
 			case eDepthStencilState:
 			{
 				DepthStencilStateCommand cmd;
-				queue->read(cmd);
+				queue->readCmd(cmd);
 				//execute cmd
 				_depthStencilStateCmd(&cmd);
 				break;
@@ -90,7 +90,7 @@ namespace Jikken
 			case eDraw:
 			{
 				DrawCommand cmd;
-				queue->read(cmd);
+				queue->readCmd(cmd);
 				//execute cmd
 				_drawCmd(&cmd);
 				break;
@@ -99,15 +99,13 @@ namespace Jikken
 			case eUpdateBuffer:
 			{
 				UpdateBufferCommand cmd;
-				queue->read(cmd.buffer);
-				queue->read(cmd.dataSize);
-				queue->read(cmd.offset);
+				queue->readCmd(cmd.buffer);
+				queue->readCmd(cmd.dataSize);
+				queue->readCmd(cmd.offset);
 				//read data pointer address
 				uintptr_t addr;
-				queue->read(addr);
+				queue->readCmd(addr);
 				cmd.data = reinterpret_cast<void*>(addr);
-				//skip past the data
-				queue->skip(cmd.dataSize);
 				//execute cmd
 				_updateBufferCmd(&cmd);
 				break;
@@ -116,16 +114,14 @@ namespace Jikken
 			case eReallocBuffer:
 			{
 				ReallocBufferCommand cmd;
-				queue->read(cmd.buffer);
-				queue->read(cmd.count);
-				queue->read(cmd.hint);
-				queue->read(cmd.stride);
+				queue->readCmd(cmd.buffer);
+				queue->readCmd(cmd.count);
+				queue->readCmd(cmd.hint);
+				queue->readCmd(cmd.stride);
 				//read data pointer address
 				uintptr_t addr;
-				queue->read(addr);
+				queue->readCmd(addr);
 				cmd.data = reinterpret_cast<void*>(addr);
-				//skip past the data
-				queue->skip(cmd.stride * cmd.count);
 				//execute cmd
 				_reallocBufferCmd(&cmd);
 				break;
@@ -134,7 +130,7 @@ namespace Jikken
 			case eBindVAO:
 			{
 				BindVAOCommand cmd;
-				queue->read(cmd);
+				queue->readCmd(cmd);
 				//execute cmd
 				_bindVAOCmd(&cmd);
 				break;
@@ -143,7 +139,7 @@ namespace Jikken
 			case eCullState:
 			{
 				CullStateCommand cmd;
-				queue->read(cmd);
+				queue->readCmd(cmd);
 				//execute cmd
 				_cullStateCmd(&cmd);
 				break;
@@ -152,7 +148,7 @@ namespace Jikken
 			case eClearBuffer:
 			{
 				ClearBufferCommand cmd;
-				queue->read(cmd);
+				queue->readCmd(cmd);
 				//execute cmd
 				_clearBufferCmd(&cmd);
 				break;
@@ -161,7 +157,7 @@ namespace Jikken
 			case eBlendState:
 			{
 				BlendStateCommand cmd;
-				queue->read(cmd);
+				queue->readCmd(cmd);
 				//execute cmd
 				_blendStateCmd(&cmd);
 				break;
@@ -170,7 +166,7 @@ namespace Jikken
 			case eViewport:
 			{
 				ViewportCommand cmd;
-				queue->read(cmd);
+				queue->readCmd(cmd);
 				//execute cmd
 				_viewportCmd(&cmd);
 				break;

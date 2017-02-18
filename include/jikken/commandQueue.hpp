@@ -29,153 +29,179 @@
 #include "jikken/memory.hpp"
 #include <cstring>
 
-#define MAX_COMMAND_BUFFER_SIZE (64<<10)
-
-//TODO mCmdMemory & mBufferMemory pools
 namespace Jikken
 {
+
+
 	class CommandQueue
 	{
 		friend class GraphicsDevice;
 	private:
-		CommandQueue() :
-			mPos(0),
-			mSize(MAX_COMMAND_BUFFER_SIZE),
-			mCmdMemory(4096, 4),
-			mBufferMemory(MemoryPool::MEGABYTE * 4, 1)
+
+		struct Packet
 		{
-			finish();
+			void *mem;
+			Packet *next;
+
+			Packet() :mem(nullptr), next(nullptr) {}
+		};
+
+		CommandQueue() :
+			mCmdMemory(4096, 4),
+			mBufferMemory(MemoryPool::MEGABYTE * 4, 1),
+			mFirstPacket(nullptr),
+			mLastPacket(nullptr),
+			mCurrentReadPacket(nullptr)
+		{
 		}
 
 		~CommandQueue()
 		{
 		}
 
-
 	private:
 
-		inline void write(const void* data, size_t size)
+		inline void writeCmd(const void* data, size_t size)
 		{
-			memcpy(&mBuffer[mPos], data, size);
-			mPos += size;
+			Packet *packet = mCmdMemory.malloc<Packet>();
+			packet->mem = mCmdMemory.malloc(size);
+			memcpy(packet->mem, data, size);
+
+			if (mLastPacket != nullptr)
+				mLastPacket->next = packet;
+			else
+				mFirstPacket = packet;
+
+			mLastPacket = packet;
 		}
 
 		template<typename T>
-		inline void write(const T& _in)
+		inline void writeCmd(const T& _in)
 		{
-			write(reinterpret_cast<const uint8_t*>(&_in), sizeof(T));
+			writeCmd(reinterpret_cast<const void*>(&_in), sizeof(T));
 		}
 
-	public:
+		inline void writeData(const void* data, size_t size)
+		{
+			void* mem = mBufferMemory.malloc(size);
+			memcpy(mem, data, size);
+			//write pointer address to the command buffer for later retrieval
+			uintptr_t addr = reinterpret_cast<uintptr_t>(mem);
+			writeCmd(addr);
+		}
+
+		template<typename T>
+		inline void writeData(const T& _in)
+		{
+			writeData(reinterpret_cast<const void*>(&_in), sizeof(T));
+		}
 
 		inline void reset()
 		{
-			mPos = 0;
+			mBufferMemory.free();
+			mCmdMemory.free();
+			mFirstPacket = nullptr;
+			mLastPacket = nullptr;
+			mCurrentReadPacket = nullptr;
 		}
 
 		inline void finish()
 		{
 			uint8_t finish = eFinishQueue;
-			write(finish);
-			mSize = mPos;
-			mPos = 0;
+			writeCmd(finish);
+			mCurrentReadPacket = mFirstPacket;
 		}
 
-		inline void read(void* data, size_t size)
+		inline void readCmd(void* data, size_t size)
 		{
-			memcpy(data, &mBuffer[mPos], size);
-			mPos += size;
+			assert(mCurrentReadPacket);
+			assert(mCurrentReadPacket->mem);
+
+			memcpy(data, mCurrentReadPacket->mem, size);
+			mCurrentReadPacket = mCurrentReadPacket->next;
 		}
 
 		template<typename T>
-		inline void read(T& _in)
+		inline void readCmd(T& _in)
 		{
-			read(reinterpret_cast<uint8_t*>(&_in), sizeof(T));
+			readCmd(reinterpret_cast<void*>(&_in), sizeof(T));
 		}
 
-		void skip(size_t size)
-		{
-			mPos += size;
-		}
+	public:
 
 		//add/record commands to the queue
 		inline void addSetShaderCommand(const SetShaderCommand *cmd)
 		{
-			write(eSetShader);
-			write(cmd,sizeof(SetShaderCommand));
+			writeCmd(eSetShader);
+			writeCmd(cmd,sizeof(SetShaderCommand));
 		}
 
 		inline void addUpdateBufferCommand(const UpdateBufferCommand *cmd)
 		{
-			write(eUpdateBuffer);
-			write(cmd->buffer);
-			write(cmd->dataSize);
-			write(cmd->offset);
-			//write data pointer address
-			uintptr_t addr = reinterpret_cast<uintptr_t>(&mBuffer[mPos + sizeof(uintptr_t)]);
-			write(addr);
+			writeCmd(eUpdateBuffer);
+			writeCmd(cmd->buffer);
+			writeCmd(cmd->dataSize);
+			writeCmd(cmd->offset);
 			//write data
-			write(cmd->data, cmd->dataSize);
+			writeData(cmd->data, cmd->dataSize);
 		}
 
 		inline void addReallocBufferCommand(const ReallocBufferCommand *cmd)
 		{
-			write(eReallocBuffer);
-			write(cmd->buffer);
-			write(cmd->count);
-			write(cmd->hint);
-			write(cmd->stride);
-			//write data pointer address
-			uintptr_t addr = reinterpret_cast<uintptr_t>(&mBuffer[mPos + sizeof(uintptr_t)]);
-			write(addr);
+			writeCmd(eReallocBuffer);
+			writeCmd(cmd->buffer);
+			writeCmd(cmd->count);
+			writeCmd(cmd->hint);
+			writeCmd(cmd->stride);
 			//write data
-			write(cmd->data, cmd->stride * cmd->count);
+			writeData(cmd->data, cmd->stride * cmd->count);
 		}
 
 		inline void addClearCommand(const ClearBufferCommand *cmd)
 		{
-			write(eClearBuffer);
-			write(cmd, sizeof(ClearBufferCommand));
+			writeCmd(eClearBuffer);
+			writeCmd(cmd, sizeof(ClearBufferCommand));
 		}
 
 		inline void addDepthStencilStateCommand(const DepthStencilStateCommand *cmd)
 		{
-			write(eDepthStencilState);
-			write(cmd, sizeof(DepthStencilStateCommand));
+			writeCmd(eDepthStencilState);
+			writeCmd(cmd, sizeof(DepthStencilStateCommand));
 		}
 
 		inline void addBlendStateCommand(const BlendStateCommand *cmd)
 		{
-			write(eBlendState);
-			write(cmd, sizeof(BlendStateCommand));
+			writeCmd(eBlendState);
+			writeCmd(cmd, sizeof(BlendStateCommand));
 		}
 
 		inline void addCullStateCommand(const CullStateCommand *cmd)
 		{
-			write(eCullState);
-			write(cmd, sizeof(CullStateCommand));
+			writeCmd(eCullState);
+			writeCmd(cmd, sizeof(CullStateCommand));
 		}
 
 		inline void addBindVAOCommand(const BindVAOCommand *cmd)
 		{
-			write(eBindVAO);
-			write(cmd, sizeof(BindVAOCommand));
+			writeCmd(eBindVAO);
+			writeCmd(cmd, sizeof(BindVAOCommand));
 		}
 
 		inline void addDrawCommand(const DrawCommand *cmd)
 		{
-			write(eDraw);
-			write(cmd, sizeof(DrawCommand));
+			writeCmd(eDraw);
+			writeCmd(cmd, sizeof(DrawCommand));
 		}
 
 
 	private:
-		uintptr_t mPos;
-		size_t mSize;
-		uint8_t mBuffer[MAX_COMMAND_BUFFER_SIZE];
-		//TODO mCmdMemory & mBufferMemory pools to replace above mBuffer
+
 		MemoryPool mBufferMemory;
 		MemoryPool mCmdMemory;
+
+		Packet *mFirstPacket;
+		Packet *mLastPacket;
+		Packet *mCurrentReadPacket;
 	};
 }
 
