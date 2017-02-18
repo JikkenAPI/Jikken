@@ -66,7 +66,7 @@ namespace Jikken
 		while (!queueEnd)
 		{
 			uint8_t cmdType;
-			queue->readCmd(&cmdType,sizeof(uint8_t));
+			queue->readCmd(cmdType);
 			switch (cmdType)
 			{
 			case eSetShader:
