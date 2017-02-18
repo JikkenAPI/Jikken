@@ -86,6 +86,7 @@ endif()
 
 target_link_libraries(Jikken ${JIKKEN_LIBS})
 target_include_directories(Jikken PUBLIC ${JIKKEN_INCLUDE})
+target_compile_definitions(Jikken PUBLIC NOMINMAX)
 
 source_group("core" REGULAR_EXPRESSION /*)
 source_group("opengl" REGULAR_EXPRESSION GL/*)
