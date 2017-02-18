@@ -31,8 +31,6 @@
 
 namespace Jikken
 {
-
-
 	class CommandQueue
 	{
 		friend class GraphicsDevice;
@@ -134,6 +132,12 @@ namespace Jikken
 		{
 			writeCmd(eSetShader);
 			writeCmd(cmd,sizeof(SetShaderCommand));
+		}
+
+		inline void addBeginFrameCommand(const BeginFrameCommand *cmd)
+		{
+			writeCmd(eBeginFrame);
+			writeCmd(cmd,sizeof(BeginFrameCommand));
 		}
 
 		inline void addUpdateBufferCommand(const UpdateBufferCommand *cmd)

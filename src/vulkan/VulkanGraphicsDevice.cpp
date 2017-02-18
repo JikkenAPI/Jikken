@@ -42,7 +42,9 @@ namespace Jikken
 		mComputeQueueIndex(UINT32_MAX),
 		mRenderPass(VK_NULL_HANDLE),
 		mDebugCallback(VK_NULL_HANDLE),
-		mAllocCallback(nullptr)
+		mAllocCallback(nullptr),
+		mImageAvailableSem(VK_NULL_HANDLE),
+		mPresentFinishedSem(VK_NULL_HANDLE)
 	{
 	}
 
@@ -604,17 +606,17 @@ namespace Jikken
 	void VulkanGraphicsDevice::deleteShader(ShaderHandle handle)
 	{
 	}
-
-	void VulkanGraphicsDevice::beginFrame()
-	{
-	}
-
+	
 	void VulkanGraphicsDevice::presentFrame()
 	{
 	}
 
 	//Commands
 	void VulkanGraphicsDevice::_setShaderCmd(SetShaderCommand *cmd)
+	{
+	}
+
+	void VulkanGraphicsDevice::_beginFrameCmd(BeginFrameCommand *cmd)
 	{
 	}
 

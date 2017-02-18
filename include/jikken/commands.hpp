@@ -34,6 +34,7 @@ namespace Jikken
 	enum CommandType : uint8_t
 	{
 		eSetShader=0,
+		eBeginFrame,
 		eUpdateBuffer,
 		eReallocBuffer,
 		eDraw,
@@ -50,6 +51,14 @@ namespace Jikken
 	struct SetShaderCommand 
 	{
 		ShaderHandle handle;
+	};
+
+	struct BeginFrameCommand
+	{
+		uint32_t clearFlag;
+		float clearColor[4];
+		float depth;
+		int32_t stencil;
 	};
 
 	struct UpdateBufferCommand

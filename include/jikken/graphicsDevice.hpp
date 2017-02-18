@@ -67,13 +67,13 @@ namespace Jikken
 		void submitCommandQueue(CommandQueue *queue);
 		virtual bool init(void *glfwWinHandle) = 0;
 
-		virtual void beginFrame() = 0;
 		virtual void presentFrame() = 0;
 
 	protected:
 		//queue exec functions
 
 		virtual void _setShaderCmd(SetShaderCommand *cmd) = 0;
+		virtual void _beginFrameCmd(BeginFrameCommand *cmd) = 0;
 		virtual void _updateBufferCmd(UpdateBufferCommand *cmd) = 0;
 		virtual void _reallocBufferCmd(ReallocBufferCommand *cmd) = 0;
 		virtual void _drawCmd(DrawCommand *cmd) = 0;

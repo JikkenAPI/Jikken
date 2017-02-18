@@ -78,6 +78,15 @@ namespace Jikken
 				break;
 			}
 
+			case eBeginFrame:
+			{
+				BeginFrameCommand cmd;
+				queue->readCmd(cmd);
+				//execute cmd
+				_beginFrameCmd(&cmd);
+				break;
+			}
+
 			case eDepthStencilState:
 			{
 				DepthStencilStateCommand cmd;

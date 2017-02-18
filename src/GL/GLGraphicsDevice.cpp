@@ -278,6 +278,29 @@ namespace Jikken
 		checkGLErrors();
 	}
 
+	void GLGraphicsDevice::_beginFrameCmd(BeginFrameCommand *cmd)
+	{
+		uint32_t flag = 0x0;
+		if (cmd->clearFlag & ClearBufferFlags::eColor)
+		{
+			flag |= GL_COLOR_BUFFER_BIT;
+			glClearColor(cmd->clearColor[0], cmd->clearColor[1], cmd->clearColor[2], cmd->clearColor[3]);
+		}
+		if (cmd->clearFlag & ClearBufferFlags::eDepth)
+		{
+			flag |= GL_DEPTH_BUFFER_BIT;
+			glClearDepth(cmd->depth);
+		}
+		if (cmd->clearFlag & ClearBufferFlags::eStencil)
+		{
+			flag |= GL_STENCIL_BUFFER_BIT;
+			glClearStencil(cmd->stencil);
+		}
+
+		glClear(flag);
+		checkGLErrors();
+	}
+
 	void GLGraphicsDevice::_updateBufferCmd(UpdateBufferCommand *cmd)
 	{
 		GLBuffer buffer = mBufferToGL[cmd->buffer];
@@ -472,10 +495,6 @@ namespace Jikken
 
 		// We've set it at least once.
 		mStateCache.cull.firstSet = false;
-	}
-
-	void GLGraphicsDevice::beginFrame()
-	{
 	}
 
 	void GLGraphicsDevice::presentFrame()
