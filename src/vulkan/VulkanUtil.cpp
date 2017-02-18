@@ -23,6 +23,7 @@
 //-----------------------------------------------------------------------------
 
 #include "vulkan/VulkanUtil.hpp"
+#include <algorithm>
 
 namespace Jikken
 {
@@ -148,6 +149,80 @@ namespace Jikken
 			}
 
 			return false;
+		}
+
+		uint32_t getSwapChainNumImages(const VkSurfaceCapabilitiesKHR &surfaceCaps)
+		{
+			uint32_t count = surfaceCaps.minImageCount + 1;
+			if ((surfaceCaps.maxImageCount > 0) && (count > surfaceCaps.maxImageCount))
+			{
+				count = surfaceCaps.maxImageCount;
+			}
+			return count;
+		}
+
+		VkSurfaceFormatKHR getSwapChainFormat(const std::vector<VkSurfaceFormatKHR> &surfaceFormats)
+		{
+			// If the list contains only one entry with undefined format
+			// it means that there are no preferred surface formats and any can be chosen
+			if ((surfaceFormats.size() == 1) && (surfaceFormats[0].format == VK_FORMAT_UNDEFINED))
+				return{ VK_FORMAT_R8G8B8A8_UNORM, VK_COLORSPACE_SRGB_NONLINEAR_KHR };
+
+			// Check if list contains most widely used R8 G8 B8 A8 format
+			// with nonlinear color space
+			for (const auto &surfaceformat : surfaceFormats)
+			{
+				if (surfaceformat.format == VK_FORMAT_R8G8B8A8_UNORM)
+					return surfaceformat;
+			}
+
+			// Return the first format from the list
+			return surfaceFormats[0];
+		}
+
+
+		VkSurfaceTransformFlagBitsKHR getSwapChainTransform(const VkSurfaceCapabilitiesKHR &surfaceCaps)
+		{
+			if (surfaceCaps.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR)
+				return VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+			else
+				return surfaceCaps.currentTransform;
+		}
+
+		VkPresentModeKHR getSwapChainPresentMode(const std::vector<VkPresentModeKHR> &presentModes)
+		{
+			
+			// Doesn't vsync or tear, more latency than tearing
+			for (const auto &presentMode : presentModes)
+			{
+				if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+					return presentMode;
+			}
+
+			// FIFO present should always be available on all implementations
+			for (const auto &presentMode : presentModes)
+			{
+				if (presentMode == VK_PRESENT_MODE_FIFO_KHR)
+					return presentMode;
+			}
+
+			std::printf("FIFO present mode is not supported by the swap chain");
+			return static_cast<VkPresentModeKHR>(-1);
+		}
+
+		VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
+		{
+			if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
+				return capabilities.currentExtent;
+			else
+			{
+				VkExtent2D actualExtent;
+
+				actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
+				actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
+
+				return actualExtent;
+			}
 		}
 
 		VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t obj, size_t location,

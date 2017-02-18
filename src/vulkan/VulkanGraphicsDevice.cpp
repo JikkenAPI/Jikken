@@ -56,6 +56,23 @@ namespace Jikken
 		if (mRenderPass)
 			vkDestroyRenderPass(mDevice, mRenderPass, mAllocCallback);
 
+		//cleanup swapchain
+		for (auto &img : mSwapChainParams.images)
+		{
+			if (img.view != VK_NULL_HANDLE)
+			{
+				vkDestroyImageView(mDevice, img.view, nullptr);
+				img.view = VK_NULL_HANDLE;
+			}
+		}
+
+		mSwapChainParams.images.clear();
+
+		if (mSwapChainParams.swapChain)
+		{
+			vkDestroySwapchainKHR(mDevice, mSwapChainParams.swapChain, mAllocCallback);
+		}
+
 		// destroy logical device
 		if (mDevice)
 			vkDestroyDevice(mDevice, mAllocCallback);
@@ -316,6 +333,13 @@ namespace Jikken
 			return false;
 		}
 
+		//create swapchain
+		if (!_createSwapchain())
+		{
+			std::printf("Failed to create vulkan swapchain\n");
+			return false;
+		}
+
 		//setup backbuffer and render pass
 		VkAttachmentDescription backBufAttachmentDesc[2];
 		//color
@@ -384,6 +408,163 @@ namespace Jikken
 		return true;
 	}
 
+	bool VulkanGraphicsDevice::_createSwapchain()
+	{
+		//delete image views
+		for (auto &img : mSwapChainParams.images)
+		{
+			if (img.view != VK_NULL_HANDLE)
+			{
+				vkDestroyImageView(mDevice, img.view, nullptr);
+				img.view = VK_NULL_HANDLE;
+			}
+		}
+
+		mSwapChainParams.images.clear();
+
+		VkSurfaceCapabilitiesKHR surfaceCaps;
+		VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(mPhysicalDevice, mSurface, &surfaceCaps);
+		if (result != VK_SUCCESS)
+		{
+			std::printf("vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed\n");
+			return false;
+		}
+
+		uint32_t formatCount;
+		result = vkGetPhysicalDeviceSurfaceFormatsKHR(mPhysicalDevice, mSurface, &formatCount, nullptr);
+		if (result != VK_SUCCESS || formatCount == 0)
+		{
+			std::printf("vkGetPhysicalDeviceSurfaceFormatsKHR failed\n");
+			return false;
+		}
+
+		std::vector<VkSurfaceFormatKHR> surfaceFormats(formatCount);
+		result = vkGetPhysicalDeviceSurfaceFormatsKHR(mPhysicalDevice, mSurface, &formatCount, surfaceFormats.data());
+		if (result != VK_SUCCESS)
+		{
+			std::printf("vkGetPhysicalDeviceSurfaceFormatsKHR failed\n");
+			return false;
+		}
+
+		uint32_t presentCount;
+		result = vkGetPhysicalDeviceSurfacePresentModesKHR(mPhysicalDevice, mSurface, &presentCount, nullptr);
+		if (result != VK_SUCCESS || presentCount == 0)
+		{
+			std::printf("vkGetPhysicalDeviceSurfacePresentModesKHR failed\n");
+			return false;
+		}
+
+		std::vector<VkPresentModeKHR> presentModes(presentCount);
+		result = vkGetPhysicalDeviceSurfacePresentModesKHR(mPhysicalDevice, mSurface, &presentCount, presentModes.data());
+		if (result != VK_SUCCESS)
+		{
+			std::printf("vkGetPhysicalDeviceSurfacePresentModesKHR failed\n");
+			return false;
+		}
+
+		uint32_t swapImageCount = vkutils::getSwapChainNumImages(surfaceCaps);
+		VkSurfaceFormatKHR desiredFormat = vkutils::getSwapChainFormat(surfaceFormats);
+		VkImageUsageFlags desiredUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		VkSurfaceTransformFlagBitsKHR desiredTransform = vkutils::getSwapChainTransform(surfaceCaps);
+		VkPresentModeKHR desiredPresentMode = vkutils::getSwapChainPresentMode(presentModes);
+		VkSwapchainKHR oldSwapChain = mSwapChainParams.swapChain;
+
+		if (static_cast<int32_t>(desiredUsage) == -1)
+			return false;
+
+		if (static_cast<int32_t>(desiredPresentMode) == -1)
+			return false;
+
+		//swapchain create info
+		VkSwapchainCreateInfoKHR createInfo = {};
+		createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+		createInfo.pNext = nullptr;
+		createInfo.flags = 0;
+		createInfo.surface = mSurface;
+		createInfo.minImageCount = swapImageCount;
+		createInfo.imageFormat = desiredFormat.format;
+		createInfo.imageColorSpace = desiredFormat.colorSpace;
+		createInfo.imageExtent = vkutils::chooseSwapExtent(surfaceCaps);
+		createInfo.imageArrayLayers = 1;
+		createInfo.imageUsage = desiredUsage;
+		createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		createInfo.queueFamilyIndexCount = 0;
+		createInfo.pQueueFamilyIndices = nullptr;
+		createInfo.preTransform = desiredTransform;
+		createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		createInfo.presentMode = desiredPresentMode;
+		createInfo.clipped = VK_TRUE;
+		createInfo.oldSwapchain = oldSwapChain;
+
+		result = vkCreateSwapchainKHR(mDevice, &createInfo, mAllocCallback, &mSwapChainParams.swapChain);
+		if (result != VK_SUCCESS)
+		{
+			std::printf("vkCreateSwapchainKHR failed\n");
+			return false;
+		}
+
+		if (oldSwapChain != VK_NULL_HANDLE)
+			vkDestroySwapchainKHR(mDevice, mSwapChainParams.swapChain, mAllocCallback);
+
+		mSwapChainParams.format = desiredFormat.format;
+		mSwapChainParams.extent = createInfo.imageExtent;
+
+		//images
+		uint32_t imageCount = 0;
+		result = vkGetSwapchainImagesKHR(mDevice, mSwapChainParams.swapChain, &imageCount, nullptr);
+		if (result != VK_SUCCESS || imageCount == 0)
+		{
+			std::printf("vkGetSwapchainImagesKHR failed\n");
+			return false;
+		}
+
+		mSwapChainParams.images.resize(imageCount);
+
+		std::vector<VkImage> images(imageCount);
+		result = vkGetSwapchainImagesKHR(mDevice, mSwapChainParams.swapChain, &imageCount, images.data());
+		if (result != VK_SUCCESS)
+		{
+			std::printf("vkGetSwapchainImagesKHR failed\n");
+			return false;
+		}
+
+		VkComponentMapping mapping = { VK_COMPONENT_SWIZZLE_IDENTITY,VK_COMPONENT_SWIZZLE_IDENTITY,VK_COMPONENT_SWIZZLE_IDENTITY,VK_COMPONENT_SWIZZLE_IDENTITY };
+		VkImageSubresourceRange range = { VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,1 };
+		for (uint32_t i = 0; i < imageCount; i++)
+		{
+			mSwapChainParams.images[i].image = images[i];
+
+			VkImageViewCreateInfo imageCreateInfo = {};
+			imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			imageCreateInfo.pNext = nullptr;
+			imageCreateInfo.flags = 0;
+			imageCreateInfo.image = mSwapChainParams.images[i].image;
+			imageCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			imageCreateInfo.format = mSwapChainParams.format;
+			imageCreateInfo.components = mapping;
+			imageCreateInfo.subresourceRange = range;
+
+			result = vkCreateImageView(mDevice, &imageCreateInfo, mAllocCallback, &mSwapChainParams.images[i].view);
+			if (result != VK_SUCCESS)
+			{
+				std::printf("vkCreateImageView failed\n");
+				return false;
+			}
+		}
+
+		//viewport params
+		mViewPortParams.viewport.height = static_cast<float>(mSwapChainParams.extent.height);
+		mViewPortParams.viewport.width = static_cast<float>(mSwapChainParams.extent.width);
+		mViewPortParams.viewport.x = 0.f;
+		mViewPortParams.viewport.y = 0.f;
+		mViewPortParams.viewport.minDepth = 0.f;
+		mViewPortParams.viewport.maxDepth = 1.0f;
+		mViewPortParams.scissor.offset = { 0, 0 };
+		mViewPortParams.scissor.extent = mSwapChainParams.extent;
+
+		return true;
+	}
+
 	ShaderHandle VulkanGraphicsDevice::createShader(const std::vector<ShaderDetails> &shaders)
 	{
 		return InvalidHandle;
@@ -425,6 +606,51 @@ namespace Jikken
 	}
 
 	void VulkanGraphicsDevice::present()
+	{
+	}
+
+	//Commands
+	void VulkanGraphicsDevice::_setShaderCmd(SetShaderCommand *cmd)
+	{
+	}
+
+	void VulkanGraphicsDevice::_updateBufferCmd(UpdateBufferCommand *cmd)
+	{
+	}
+
+	void VulkanGraphicsDevice::_reallocBufferCmd(ReallocBufferCommand *cmd)
+	{
+	}
+
+	void VulkanGraphicsDevice::_drawCmd(DrawCommand *cmd)
+	{
+	}
+
+	void VulkanGraphicsDevice::_drawInstanceCmd(DrawInstanceCommand *cmd)
+	{
+	}
+
+	void VulkanGraphicsDevice::_clearBufferCmd(ClearBufferCommand *cmd)
+	{
+	}
+
+	void VulkanGraphicsDevice::_bindVAOCmd(BindVAOCommand *cmd)
+	{
+	}
+
+	void VulkanGraphicsDevice::_viewportCmd(ViewportCommand *cmd)
+	{
+	}
+
+	void VulkanGraphicsDevice::_blendStateCmd(BlendStateCommand *cmd)
+	{
+	}
+
+	void VulkanGraphicsDevice::_depthStencilStateCmd(DepthStencilStateCommand *cmd)
+	{
+	}
+
+	void VulkanGraphicsDevice::_cullStateCmd(CullStateCommand *cmd)
 	{
 	}
 }

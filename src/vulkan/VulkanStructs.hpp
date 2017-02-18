@@ -22,35 +22,52 @@
 // SOFTWARE.
 //-----------------------------------------------------------------------------
 
-#ifndef _JIKKEN_VULKAN_VULKANUTIL_HPP_
-#define _JIKKEN_VULKAN_VULKANUTIL_HPP_
+#ifndef _JIKKEN_VULKAN_VULKANSTRUCTS_HPP_
+#define _JIKKEN_VULKAN_VULKANSTRUCTS_HPP_
 
 #include <vulkan/vulkan.h>
-#include <string>
-#include <vector>
 
 namespace Jikken
 {
-	namespace vkutils
+	struct ImageParams
 	{
-		bool checkExtension(const std::string &extensionName, const std::vector<VkExtensionProperties> &extensionList);
-		bool checkLayer(const std::string &layerName, const std::vector<VkLayerProperties> &layerList);
-		bool checkPhysicalDevice(const VkPhysicalDevice physicalDevice, const VkSurfaceKHR surface, uint32_t &graphicsQueue, uint32_t &computeQueue);
-		void printDeviceInfo(const VkPhysicalDevice device);
+		VkImage image;
+		VkImageView view;
+		VkSampler sampler;
+		VkDeviceMemory memory;
 
-		uint32_t getSwapChainNumImages(const VkSurfaceCapabilitiesKHR &surfaceCaps);
-		//todo add requested format
-		VkSurfaceFormatKHR getSwapChainFormat(const std::vector<VkSurfaceFormatKHR> &surfaceFormats);
-		VkSurfaceTransformFlagBitsKHR getSwapChainTransform(const VkSurfaceCapabilitiesKHR &surfaceCaps);
-		//todo should really let user have a say in this
-		VkPresentModeKHR getSwapChainPresentMode(const std::vector<VkPresentModeKHR> &presentModes);
-		//choose swapchain extent
-		VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+		ImageParams() :
+			image(VK_NULL_HANDLE),
+			view(VK_NULL_HANDLE),
+			sampler(VK_NULL_HANDLE),
+			memory(VK_NULL_HANDLE)
+		{}
+	};
 
-		//debug callback
-		VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t obj, size_t location,
-			int32_t code, const char* layerPrefix, const char* msg, void* userData);
-	}
+	struct SwapChainParams
+	{
+		VkSwapchainKHR swapChain;
+		VkFormat format;
+		VkExtent2D extent;
+		std::vector<ImageParams> images;
+
+		SwapChainParams() :
+			swapChain(VK_NULL_HANDLE),
+			format(VK_FORMAT_UNDEFINED),
+			extent(),
+			images()
+		{}
+	};
+
+	struct ViewportParams
+	{
+		VkViewport viewport;
+		VkRect2D scissor;
+		ViewportParams() :
+			viewport(),
+			scissor()
+		{}
+	};
 }
 
 #endif
