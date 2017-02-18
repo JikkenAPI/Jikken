@@ -344,7 +344,7 @@ namespace Jikken
 		VkAttachmentDescription backBufAttachmentDesc[2];
 		//color
 		backBufAttachmentDesc[0].flags = 0;
-		backBufAttachmentDesc[0].format = VK_FORMAT_B8G8R8A8_UNORM;
+		backBufAttachmentDesc[0].format = mSwapChainParams.format;
 		backBufAttachmentDesc[0].samples = VK_SAMPLE_COUNT_1_BIT;
 		backBufAttachmentDesc[0].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		backBufAttachmentDesc[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
