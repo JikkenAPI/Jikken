@@ -605,7 +605,11 @@ namespace Jikken
 	{
 	}
 
-	void VulkanGraphicsDevice::present()
+	void VulkanGraphicsDevice::beginFrame()
+	{
+	}
+
+	void VulkanGraphicsDevice::presentFrame()
 	{
 	}
 

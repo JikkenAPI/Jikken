@@ -67,7 +67,8 @@ namespace Jikken
 		void submitCommandQueue(CommandQueue *queue);
 		virtual bool init(void *glfwWinHandle) = 0;
 
-		virtual void present() = 0;
+		virtual void beginFrame() = 0;
+		virtual void presentFrame() = 0;
 
 	protected:
 		//queue exec functions

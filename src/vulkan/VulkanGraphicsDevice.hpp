@@ -59,7 +59,8 @@ namespace Jikken
 
 		virtual bool init(void *glfwWinHandle) override;
 
-		virtual void present() override;
+		virtual void beginFrame() override;
+		virtual void presentFrame() override;
 
 	protected:
 		virtual void _setShaderCmd(SetShaderCommand *cmd) override;

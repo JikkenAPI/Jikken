@@ -474,7 +474,11 @@ namespace Jikken
 		mStateCache.cull.firstSet = false;
 	}
 
-	void GLGraphicsDevice::present()
+	void GLGraphicsDevice::beginFrame()
+	{
+	}
+
+	void GLGraphicsDevice::presentFrame()
 	{
 		glfwSwapBuffers(mWindowHandle);
 	}
