@@ -117,7 +117,7 @@ namespace Jikken
 #ifdef _DEBUG
 			if (sizeof(T) > mPageSize)
 			{
-				printf("Need to increase stack frame. sizeof(T) is %d while pageSize is %d\n", static_cast<int32_t>(sizeof(T)), mPageSize);
+				printf("Need to increase stack frame. sizeof(T) is %d while pageSize is %zd\n", static_cast<int32_t>(sizeof(T)), mPageSize);
 				assert(false);
 			}
 #endif
