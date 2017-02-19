@@ -38,8 +38,16 @@ namespace Jikken
 
 	enum class BlendState : uint8_t
 	{
-		eSrcAlpha = 0,
-		eOneMinusSrcAlpha
+		eZero = 0,
+		eOne,
+		eSrcColor,
+		eOneMinusSrcColor,
+		eSrcAlpha,
+		eOneMinusSrcAlpha,
+		eDstAlpha,
+		eOneMinusDstAlpha,
+		eDstColor,
+		eOneMinusDstColor
 	};
 
 	enum class DepthFunc : uint8_t
