@@ -41,10 +41,11 @@ namespace Jikken
 		mGraphicsQueueIndex(UINT32_MAX),
 		mComputeQueueIndex(UINT32_MAX),
 		mRenderPass(VK_NULL_HANDLE),
+		mCommandPool(VK_NULL_HANDLE),
 		mDebugCallback(VK_NULL_HANDLE),
 		mAllocCallback(nullptr),
 		mImageAvailableSem(VK_NULL_HANDLE),
-		mPresentFinishedSem(VK_NULL_HANDLE)
+		mRenderFinishedSem(VK_NULL_HANDLE)
 	{
 	}
 
@@ -53,6 +54,23 @@ namespace Jikken
 		//wait for device to be idle
 		if (mDevice)
 			vkDeviceWaitIdle(mDevice);
+
+		//destory semaphores
+		if (mImageAvailableSem)
+			vkDestroySemaphore(mDevice, mImageAvailableSem, mAllocCallback);
+		if (mRenderFinishedSem)
+			vkDestroySemaphore(mDevice, mRenderFinishedSem, mAllocCallback);
+
+		//free command buffer
+		if (mCommandBuffers.size() > 0)
+		{
+			vkFreeCommandBuffers(mDevice, mCommandPool, static_cast<uint32_t>(mCommandBuffers.size()), mCommandBuffers.data());
+			mCommandBuffers.clear();
+		}
+
+		// delete command pool
+		if(mCommandPool)
+			vkDestroyCommandPool(mDevice, mCommandPool, mAllocCallback);
 
 		// destroy render pass
 		if (mRenderPass)
@@ -353,7 +371,7 @@ namespace Jikken
 		backBufAttachmentDesc[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		backBufAttachmentDesc[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		backBufAttachmentDesc[0].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		backBufAttachmentDesc[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		backBufAttachmentDesc[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 		//depth/stencil
 		backBufAttachmentDesc[1].flags = 0;
 		backBufAttachmentDesc[1].format = VK_FORMAT_D24_UNORM_S8_UINT; //VK_FORMAT_D32_SFLOAT_S8_UINT
@@ -404,6 +422,55 @@ namespace Jikken
 		if (result != VK_SUCCESS)
 		{
 			std::printf("vkCreateRenderPass failed\n");
+			return false;
+		}
+
+		//create semaphores
+		VkSemaphoreCreateInfo semaphoreCreateInfo = {};
+		semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+		semaphoreCreateInfo.pNext = nullptr;
+		//Image available sempahore
+		result = vkCreateSemaphore(mDevice, &semaphoreCreateInfo, mAllocCallback, &mImageAvailableSem);
+		if (result != VK_SUCCESS)
+		{
+			std::printf("vkCreateSemaphore failed\n");
+			return false;
+		}
+		//Rendering finished semaphore
+		result = vkCreateSemaphore(mDevice, &semaphoreCreateInfo, mAllocCallback, &mRenderFinishedSem);
+		if (result != VK_SUCCESS)
+		{
+			std::printf("vkCreateSemaphore failed\n");
+			return false;
+		}
+
+		//command buffers
+		mCommandBuffers.resize(mSwapChainParams.images.size());
+		VkCommandPoolCreateInfo cmdPoolCreateInfo;
+		cmdPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		cmdPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		cmdPoolCreateInfo.pNext = nullptr;
+		cmdPoolCreateInfo.queueFamilyIndex = mGraphicsQueueIndex;
+
+
+		result = vkCreateCommandPool(mDevice, &cmdPoolCreateInfo, mAllocCallback, &mCommandPool);
+		if (result != VK_SUCCESS)
+		{
+			std::printf("vkCreateCommandPool failed\n");
+			return false;
+		}
+
+		VkCommandBufferAllocateInfo cmdBufferAllocateInfo;
+		cmdBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		cmdBufferAllocateInfo.pNext = nullptr;
+		cmdBufferAllocateInfo.commandPool = mCommandPool;
+		cmdBufferAllocateInfo.commandBufferCount = static_cast<uint32_t>(mSwapChainParams.images.size());
+		cmdBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+
+		result = vkAllocateCommandBuffers(mDevice, &cmdBufferAllocateInfo, mCommandBuffers.data());
+		if (result != VK_SUCCESS)
+		{
+			std::printf("vkAllocateCommandBuffers failed\n");
 			return false;
 		}
 
@@ -564,6 +631,16 @@ namespace Jikken
 		mViewPortParams.scissor.offset = { 0, 0 };
 		mViewPortParams.scissor.extent = mSwapChainParams.extent;
 
+		//Store present info struct, only thing that changes is the pImageIndices per frame but that is stored as a pointer so it gets the new value as it changes
+		mPresentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		mPresentInfo.pNext = nullptr;
+		mPresentInfo.swapchainCount = 1;
+		mPresentInfo.pSwapchains = &mSwapChainParams.swapChain;
+		mPresentInfo.waitSemaphoreCount = 1;
+		mPresentInfo.pWaitSemaphores = &mRenderFinishedSem;
+		mPresentInfo.pImageIndices = &mSwapChainParams.currentImage;
+		mPresentInfo.pResults = nullptr;
+
 		return true;
 	}
 
@@ -609,6 +686,21 @@ namespace Jikken
 	
 	void VulkanGraphicsDevice::presentFrame()
 	{
+		vkQueueWaitIdle(mGraphicsQueue);
+		//in it's current form we will get annoying harmless debug warnings because we are clearing the image outside a render pass - only temp
+		VkResult result = vkQueuePresentKHR(mGraphicsQueue, &mPresentInfo);
+
+		switch (result)
+		{
+		case VK_SUCCESS:
+			break;
+		case VK_ERROR_OUT_OF_DATE_KHR:
+		case VK_SUBOPTIMAL_KHR:
+			break; //TODO: handle re-creating swapchain,mostly likely unhandled window resize
+		default:
+			std::printf("Problem occurred during image presentation\n");
+			break;
+		}
 	}
 
 	//Commands
@@ -618,6 +710,110 @@ namespace Jikken
 
 	void VulkanGraphicsDevice::_beginFrameCmd(BeginFrameCommand *cmd)
 	{
+		VkClearValue clearValue[2];
+		bool hasDepthStencil = false;
+		if (cmd->clearFlag & ClearBufferFlags::eColor)
+		{
+			clearValue[0].color = { {cmd->clearColor[0], cmd->clearColor[1], cmd->clearColor[2], cmd->clearColor[3]} };
+		}
+
+		if (cmd->clearFlag & ClearBufferFlags::eDepth)
+		{
+			clearValue[1].depthStencil.depth = cmd->depth;
+			//we give stencil a default value of 0
+			clearValue[1].depthStencil.stencil = 0;
+			hasDepthStencil = true;
+		}
+
+		if (cmd->clearFlag & ClearBufferFlags::eStencil)
+		{
+			//give depth a default value
+			if (!hasDepthStencil)
+				clearValue[1].depthStencil.depth = 1.0f;
+
+			clearValue[1].depthStencil.stencil = cmd->stencil;
+			hasDepthStencil = true;
+		}
+
+		//get the next image in the swap chain
+		//todo check result for VK_ERROR_OUT_OF_DATE_KHR and if found we need to rebuild the swapchain as it will be out of date with the framebuffer size
+		VkResult result = vkAcquireNextImageKHR(mDevice, mSwapChainParams.swapChain, UINT64_MAX, mImageAvailableSem, VK_NULL_HANDLE, &mSwapChainParams.currentImage);
+
+		/*VkRenderPassBeginInfo renderPassBeginInfo = {};
+		renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassBeginInfo.pNext = nullptr;
+		renderPassBeginInfo.renderPass = mRenderPass;
+		renderPassBeginInfo.renderArea.offset.x = 0;
+		renderPassBeginInfo.renderArea.offset.y = 0;
+		renderPassBeginInfo.renderArea.extent.width = mSwapChainParams.extent.width;
+		renderPassBeginInfo.renderArea.extent.height = mSwapChainParams.extent.height;
+		renderPassBeginInfo.clearValueCount = hasDepthStencil ? 2 : 1;
+		renderPassBeginInfo.pClearValues = clearValue;*/
+
+		VkImage image = mSwapChainParams.images[mSwapChainParams.currentImage].image;
+		//record clear commands - this will be replaced with VkRenderPassBeginInfo when proper render pass has been implemented - below commands are only temp
+		VkCommandBufferBeginInfo cmdBufferBegininfo;
+		cmdBufferBegininfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		cmdBufferBegininfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+		cmdBufferBegininfo.pNext = nullptr;
+		cmdBufferBegininfo.pInheritanceInfo = nullptr;
+
+		VkImageSubresourceRange imageSubresourceRange;
+		imageSubresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		imageSubresourceRange.baseArrayLayer = 0;
+		imageSubresourceRange.baseMipLevel = 0;
+		imageSubresourceRange.layerCount = 1;
+		imageSubresourceRange.levelCount = 1;
+
+		VkImageMemoryBarrier barrierFromPresentClear;
+		barrierFromPresentClear.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		barrierFromPresentClear.pNext = nullptr;
+		barrierFromPresentClear.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrierFromPresentClear.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+		barrierFromPresentClear.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrierFromPresentClear.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrierFromPresentClear.image = image;
+		barrierFromPresentClear.subresourceRange = imageSubresourceRange;
+		barrierFromPresentClear.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		barrierFromPresentClear.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+
+		VkImageMemoryBarrier barrierFromClearPresent;
+		barrierFromClearPresent.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		barrierFromClearPresent.pNext = nullptr;
+		barrierFromClearPresent.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+		barrierFromClearPresent.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrierFromClearPresent.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrierFromClearPresent.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrierFromClearPresent.image = image;
+		barrierFromClearPresent.subresourceRange = imageSubresourceRange;
+		barrierFromClearPresent.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		barrierFromClearPresent.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+		VkCommandBuffer cmdBuffer = mCommandBuffers[mSwapChainParams.currentImage];		
+		vkBeginCommandBuffer(cmdBuffer, &cmdBufferBegininfo);
+		vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrierFromPresentClear);
+		vkCmdClearColorImage(cmdBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearValue[0].color, 1, &imageSubresourceRange);
+		vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrierFromClearPresent);
+		//todo - needs VkImageMemoryBarriers
+		//vkCmdClearDepthStencilImage(cmdBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearValue[1].depthStencil, 1, &imageSubresourceRange);
+		result = vkEndCommandBuffer(cmdBuffer);
+
+
+		// Pipeline stage at which the queue submission will wait (via pWaitSemaphores)
+		VkPipelineStageFlags waitStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		// The submit info structure specifices a command buffer queue submission batch
+		VkSubmitInfo submitInfo = {};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.pWaitDstStageMask = &waitStageMask;
+		submitInfo.pWaitSemaphores = &mImageAvailableSem;
+		submitInfo.waitSemaphoreCount = 1;																		
+		submitInfo.pSignalSemaphores = &mRenderFinishedSem;
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pCommandBuffers = &cmdBuffer;
+		submitInfo.commandBufferCount = 1;
+		
+		result = vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+		float t = 0;
 	}
 
 	void VulkanGraphicsDevice::_updateBufferCmd(UpdateBufferCommand *cmd)
@@ -640,6 +836,7 @@ namespace Jikken
 	{
 	}
 
+	//we have to fake this as VAO is an opengl only concept
 	void VulkanGraphicsDevice::_bindVAOCmd(BindVAOCommand *cmd)
 	{
 	}

@@ -50,12 +50,14 @@ namespace Jikken
 		VkFormat format;
 		VkExtent2D extent;
 		std::vector<ImageParams> images;
+		uint32_t currentImage;
 
 		SwapChainParams() :
 			swapChain(VK_NULL_HANDLE),
 			format(VK_FORMAT_UNDEFINED),
 			extent(),
-			images()
+			images(),
+			currentImage(0)
 		{}
 	};
 

@@ -90,13 +90,16 @@ namespace Jikken
 		uint32_t mGraphicsQueueIndex; //graphics queue index
 		uint32_t mComputeQueueIndex; // compute queue index
 		VkRenderPass mRenderPass; //render pass
+		std::vector<VkCommandBuffer> mCommandBuffers;
+		VkCommandPool mCommandPool;
 		VkDebugReportCallbackEXT mDebugCallback; //debug callback
 		VkAllocationCallbacks *mAllocCallback; //allocation callback
 		SwapChainParams mSwapChainParams; //swap chain paramaters
 		ViewportParams mViewPortParams; //viewport paramaters
+		VkPresentInfoKHR mPresentInfo; //present struct
 
 		VkSemaphore mImageAvailableSem;
-		VkSemaphore mPresentFinishedSem;
+		VkSemaphore mRenderFinishedSem;
 	};
 }
 
