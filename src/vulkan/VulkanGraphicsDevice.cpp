@@ -26,6 +26,7 @@
 #include <cstdlib>
 #include "vulkan/VulkanGraphicsDevice.hpp"
 #include "vulkan/VulkanUtil.hpp"
+#include <array>
 //just temp
 #include <GLFW/glfw3.h>
 
@@ -41,6 +42,8 @@ namespace Jikken
 		mGraphicsQueueIndex(UINT32_MAX),
 		mComputeQueueIndex(UINT32_MAX),
 		mRenderPass(VK_NULL_HANDLE),
+		mCommandBuffers(),
+		mSingleCmdBuffer(VK_NULL_HANDLE),
 		mCommandPool(VK_NULL_HANDLE),
 		mDebugCallback(VK_NULL_HANDLE),
 		mAllocCallback(nullptr),
@@ -68,6 +71,10 @@ namespace Jikken
 			mCommandBuffers.clear();
 		}
 
+		//free single command buffer
+		if (mSingleCmdBuffer)
+			vkFreeCommandBuffers(mDevice, mCommandPool, 1, &mSingleCmdBuffer);
+
 		// delete command pool
 		if(mCommandPool)
 			vkDestroyCommandPool(mDevice, mCommandPool, mAllocCallback);
@@ -76,21 +83,41 @@ namespace Jikken
 		if (mRenderPass)
 			vkDestroyRenderPass(mDevice, mRenderPass, mAllocCallback);
 
-		//cleanup swapchain
-		for (auto &img : mSwapChainParams.images)
+		//delete color image views from the framebuffer
+		for (auto &color : mSwapChainParams.colorImages)
 		{
-			if (img.view != VK_NULL_HANDLE)
+			if (color.view != VK_NULL_HANDLE)
 			{
-				vkDestroyImageView(mDevice, img.view, nullptr);
-				img.view = VK_NULL_HANDLE;
+				vkDestroyImageView(mDevice, color.view, nullptr);
+				color.view = VK_NULL_HANDLE;
 			}
 		}
 
-		mSwapChainParams.images.clear();
+		mSwapChainParams.colorImages.clear();
+
+		//delete depth/stencil imageview
+		if (mSwapChainParams.depthStencilImage.view)
+		{
+			vkDestroyImageView(mDevice, mSwapChainParams.depthStencilImage.view, nullptr);
+			mSwapChainParams.depthStencilImage.view = nullptr;
+		}
+
+		//delete depth/stencil image
+		if (mSwapChainParams.depthStencilImage.image)
+		{
+			vkDestroyImage(mDevice, mSwapChainParams.depthStencilImage.image, nullptr);
+			mSwapChainParams.depthStencilImage.image = nullptr;
+		}
 
 		if (mSwapChainParams.swapChain)
 		{
 			vkDestroySwapchainKHR(mDevice, mSwapChainParams.swapChain, mAllocCallback);
+		}
+
+		//delete framebuffers
+		for (auto &fb : mSwapChainParams.frameBuffers)
+		{
+			vkDestroyFramebuffer(mDevice, fb, mAllocCallback);
 		}
 
 		// destroy logical device
@@ -299,6 +326,9 @@ namespace Jikken
 			return false;
 		}
 
+		VkPhysicalDeviceMemoryProperties memProperties;
+		vkGetPhysicalDeviceMemoryProperties(mPhysicalDevice, &memProperties);
+
 		//print some information about our physical device
 		vkutils::printDeviceInfo(mPhysicalDevice);
 
@@ -353,75 +383,65 @@ namespace Jikken
 			return false;
 		}
 
-		//create swapchain
-		if (!_createSwapchain())
+		//command pool
+		VkCommandPoolCreateInfo cmdPoolCreateInfo;
+		cmdPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		cmdPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		cmdPoolCreateInfo.pNext = nullptr;
+		cmdPoolCreateInfo.queueFamilyIndex = mGraphicsQueueIndex;
+
+		result = vkCreateCommandPool(mDevice, &cmdPoolCreateInfo, mAllocCallback, &mCommandPool);
+		if (result != VK_SUCCESS)
 		{
-			std::printf("Failed to create vulkan swapchain\n");
+			std::printf("vkCreateCommandPool failed\n");
 			return false;
 		}
 
-		//setup backbuffer and render pass
-		VkAttachmentDescription backBufAttachmentDesc[2];
-		//color
-		backBufAttachmentDesc[0].flags = 0;
-		backBufAttachmentDesc[0].format = mSwapChainParams.format;
-		backBufAttachmentDesc[0].samples = VK_SAMPLE_COUNT_1_BIT;
-		backBufAttachmentDesc[0].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		backBufAttachmentDesc[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		backBufAttachmentDesc[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		backBufAttachmentDesc[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		backBufAttachmentDesc[0].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		backBufAttachmentDesc[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-		//depth/stencil
-		backBufAttachmentDesc[1].flags = 0;
-		backBufAttachmentDesc[1].format = VK_FORMAT_D24_UNORM_S8_UINT; //VK_FORMAT_D32_SFLOAT_S8_UINT
-		backBufAttachmentDesc[1].samples = VK_SAMPLE_COUNT_1_BIT;
-		backBufAttachmentDesc[1].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		backBufAttachmentDesc[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		backBufAttachmentDesc[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		backBufAttachmentDesc[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		backBufAttachmentDesc[1].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		backBufAttachmentDesc[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		//single command buffer - used to execute single commands
+		VkCommandBufferAllocateInfo cmdBufAllocInfo = {};		
+		cmdBufAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		cmdBufAllocInfo.pNext = nullptr;
+		cmdBufAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		cmdBufAllocInfo.commandPool = mCommandPool;
+		cmdBufAllocInfo.commandBufferCount = 1;
 
-		//attachment reference
-		VkAttachmentReference attacmentRefs[3];
-		//color
-		attacmentRefs[0].attachment = 0;
-		attacmentRefs[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		//resolve
-		attacmentRefs[1].attachment = VK_ATTACHMENT_UNUSED;
-		attacmentRefs[1].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		//depth/stencil
-		attacmentRefs[2].attachment = 1;
-		attacmentRefs[2].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		result = vkAllocateCommandBuffers(mDevice, &cmdBufAllocInfo, &mSingleCmdBuffer);
 
-		VkSubpassDescription subpassDesc;
-		subpassDesc.flags = 0;
-		subpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpassDesc.inputAttachmentCount = 0;
-		subpassDesc.pInputAttachments = VK_NULL_HANDLE;
-		subpassDesc.colorAttachmentCount = 1;
-		subpassDesc.pColorAttachments = &attacmentRefs[0];
-		subpassDesc.pResolveAttachments = &attacmentRefs[1];
-		subpassDesc.pDepthStencilAttachment = &attacmentRefs[2];
-		subpassDesc.preserveAttachmentCount = 0;
-		subpassDesc.pPreserveAttachments = nullptr;
-
-		VkRenderPassCreateInfo renderPassInfo;
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		renderPassInfo.pNext = nullptr;
-		renderPassInfo.flags = 0;
-		renderPassInfo.attachmentCount = 2;
-		renderPassInfo.pAttachments = backBufAttachmentDesc;
-		renderPassInfo.subpassCount = 1;
-		renderPassInfo.pSubpasses = &subpassDesc;
-		renderPassInfo.dependencyCount = 0;
-		renderPassInfo.pDependencies = VK_NULL_HANDLE;
-
-		result = vkCreateRenderPass(mDevice, &renderPassInfo, mAllocCallback, &mRenderPass);
 		if (result != VK_SUCCESS)
 		{
-			std::printf("vkCreateRenderPass failed\n");
+			std::printf("vkAllocateCommandBuffers failed\n");
+			return false;
+		}
+
+		//setup swapchain and framebuffers
+		if (!_createSwapchain())
+		{
+			std::printf("Failed to create swapchain\n");
+			return false;
+		}
+
+		//create default renderpass
+		if (!_createDefaultRenderPass())
+		{
+			std::printf("Failed to create default renderpass");
+			return false;
+		}
+
+		//create framebuffers
+		if (!_createFramebuffers())
+		{
+			std::printf("Failed to create framebuffers");
+			return false;
+		}
+
+		//regular command buffers - one per swapchain color image
+		mCommandBuffers.resize(mSwapChainParams.colorImages.size());
+		cmdBufAllocInfo.commandBufferCount = static_cast<uint32_t>(mSwapChainParams.colorImages.size());
+
+		result = vkAllocateCommandBuffers(mDevice, &cmdBufAllocInfo, mCommandBuffers.data());
+		if (result != VK_SUCCESS)
+		{
+			std::printf("vkAllocateCommandBuffers failed\n");
 			return false;
 		}
 
@@ -444,34 +464,113 @@ namespace Jikken
 			return false;
 		}
 
-		//command buffers
-		mCommandBuffers.resize(mSwapChainParams.images.size());
-		VkCommandPoolCreateInfo cmdPoolCreateInfo;
-		cmdPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-		cmdPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-		cmdPoolCreateInfo.pNext = nullptr;
-		cmdPoolCreateInfo.queueFamilyIndex = mGraphicsQueueIndex;
 
+		return true;
+	}
 
-		result = vkCreateCommandPool(mDevice, &cmdPoolCreateInfo, mAllocCallback, &mCommandPool);
+	bool VulkanGraphicsDevice::_createDefaultRenderPass()
+	{
+		//render pass for default framebuffers
+		VkAttachmentDescription colorAttachment = {};
+		colorAttachment.flags = 0;
+		colorAttachment.format = mSwapChainParams.colorFormat;
+		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+		VkAttachmentDescription depthAttachment = {};
+		depthAttachment.flags = 0;
+		depthAttachment.format = mSwapChainParams.depthStencilFormat;
+		depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		VkAttachmentReference colorAttachmentRef = {};
+		colorAttachmentRef.attachment = 0;
+		colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		VkAttachmentReference depthAttachmentRef = {};
+		depthAttachmentRef.attachment = 1;
+		depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		VkSubpassDescription subpass = {};
+		subpass.flags = 0;
+		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass.colorAttachmentCount = 1;
+		subpass.pColorAttachments = &colorAttachmentRef;
+		subpass.pDepthStencilAttachment = &depthAttachmentRef;
+
+		VkSubpassDependency dependency = {};
+		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+		dependency.dstSubpass = 0;
+		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependency.srcAccessMask = 0;
+		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+		std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
+		VkRenderPassCreateInfo renderPassInfo = {};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+		renderPassInfo.pAttachments = attachments.data();
+		renderPassInfo.subpassCount = 1;
+		renderPassInfo.pSubpasses = &subpass;
+		renderPassInfo.dependencyCount = 1;
+		renderPassInfo.pDependencies = &dependency;
+
+		VkResult result = vkCreateRenderPass(mDevice, &renderPassInfo, mAllocCallback, &mRenderPass);
 		if (result != VK_SUCCESS)
 		{
-			std::printf("vkCreateCommandPool failed\n");
+			std::printf("vkCreateRenderPass failed\n");
 			return false;
 		}
 
-		VkCommandBufferAllocateInfo cmdBufferAllocateInfo;
-		cmdBufferAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		cmdBufferAllocateInfo.pNext = nullptr;
-		cmdBufferAllocateInfo.commandPool = mCommandPool;
-		cmdBufferAllocateInfo.commandBufferCount = static_cast<uint32_t>(mSwapChainParams.images.size());
-		cmdBufferAllocateInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		return true;
+	}
 
-		result = vkAllocateCommandBuffers(mDevice, &cmdBufferAllocateInfo, mCommandBuffers.data());
-		if (result != VK_SUCCESS)
+	bool VulkanGraphicsDevice::_createFramebuffers()
+	{
+		//delete framebuffers
+		for (auto &fb : mSwapChainParams.frameBuffers)
 		{
-			std::printf("vkAllocateCommandBuffers failed\n");
-			return false;
+			vkDestroyFramebuffer(mDevice, fb, mAllocCallback);
+		}
+
+		mSwapChainParams.frameBuffers.clear();
+
+		size_t imageCount = mSwapChainParams.colorImages.size();
+		mSwapChainParams.frameBuffers.resize(imageCount);
+		for (uint32_t i = 0; i < imageCount; i++)
+		{
+			std::array<VkImageView, 2> attachments = {
+				mSwapChainParams.colorImages[i].view,
+				mSwapChainParams.depthStencilImage.view
+			};
+
+			VkFramebufferCreateInfo framebufferInfo = {};
+			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			framebufferInfo.renderPass = mRenderPass;
+			framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+			framebufferInfo.pAttachments = attachments.data();
+			framebufferInfo.width = mSwapChainParams.extent.width;
+			framebufferInfo.height = mSwapChainParams.extent.height;
+			framebufferInfo.layers = 1;
+
+			VkResult result = vkCreateFramebuffer(mDevice, &framebufferInfo, nullptr, &mSwapChainParams.frameBuffers[i]);
+
+			if (result != VK_SUCCESS)
+			{
+				std::printf("vkCreateFramebuffer failed\n");
+				return false;
+			}
 		}
 
 		return true;
@@ -479,17 +578,31 @@ namespace Jikken
 
 	bool VulkanGraphicsDevice::_createSwapchain()
 	{
-		//delete image views
-		for (auto &img : mSwapChainParams.images)
+		//delete color image views from the framebuffer
+		for (auto &color : mSwapChainParams.colorImages)
 		{
-			if (img.view != VK_NULL_HANDLE)
+			if (color.view != VK_NULL_HANDLE)
 			{
-				vkDestroyImageView(mDevice, img.view, nullptr);
-				img.view = VK_NULL_HANDLE;
+				vkDestroyImageView(mDevice, color.view, nullptr);
+				color.view = VK_NULL_HANDLE;
 			}
 		}
 
-		mSwapChainParams.images.clear();
+		mSwapChainParams.colorImages.clear();
+
+		//delete depth/stencil imageview
+		if (mSwapChainParams.depthStencilImage.view)
+		{
+			vkDestroyImageView(mDevice, mSwapChainParams.depthStencilImage.view, nullptr);
+			mSwapChainParams.depthStencilImage.view = nullptr;
+		}
+
+		//delete depth/stencil image
+		if (mSwapChainParams.depthStencilImage.image)
+		{
+			vkDestroyImage(mDevice, mSwapChainParams.depthStencilImage.image, nullptr);
+			mSwapChainParams.depthStencilImage.image = nullptr;
+		}
 
 		VkSurfaceCapabilitiesKHR surfaceCaps;
 		VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(mPhysicalDevice, mSurface, &surfaceCaps);
@@ -575,10 +688,11 @@ namespace Jikken
 		if (oldSwapChain != VK_NULL_HANDLE)
 			vkDestroySwapchainKHR(mDevice, mSwapChainParams.swapChain, mAllocCallback);
 
-		mSwapChainParams.format = desiredFormat.format;
+		mSwapChainParams.colorFormat = desiredFormat.format;
+		mSwapChainParams.depthStencilFormat = VK_FORMAT_D24_UNORM_S8_UINT;//todo format passed in from client
 		mSwapChainParams.extent = createInfo.imageExtent;
 
-		//images
+		//color images
 		uint32_t imageCount = 0;
 		result = vkGetSwapchainImagesKHR(mDevice, mSwapChainParams.swapChain, &imageCount, nullptr);
 		if (result != VK_SUCCESS || imageCount == 0)
@@ -587,7 +701,7 @@ namespace Jikken
 			return false;
 		}
 
-		mSwapChainParams.images.resize(imageCount);
+		mSwapChainParams.colorImages.resize(imageCount);
 
 		std::vector<VkImage> images(imageCount);
 		result = vkGetSwapchainImagesKHR(mDevice, mSwapChainParams.swapChain, &imageCount, images.data());
@@ -598,28 +712,110 @@ namespace Jikken
 		}
 
 		VkComponentMapping mapping = { VK_COMPONENT_SWIZZLE_IDENTITY,VK_COMPONENT_SWIZZLE_IDENTITY,VK_COMPONENT_SWIZZLE_IDENTITY,VK_COMPONENT_SWIZZLE_IDENTITY };
-		VkImageSubresourceRange range = { VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,1 };
+		VkImageSubresourceRange colorRange = { VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,1 };
 		for (uint32_t i = 0; i < imageCount; i++)
 		{
-			mSwapChainParams.images[i].image = images[i];
+			mSwapChainParams.colorImages[i].image = images[i];
+			mSwapChainParams.colorImages[i].extent = mSwapChainParams.extent;
 
-			VkImageViewCreateInfo imageCreateInfo = {};
-			imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			imageCreateInfo.pNext = nullptr;
-			imageCreateInfo.flags = 0;
-			imageCreateInfo.image = mSwapChainParams.images[i].image;
-			imageCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-			imageCreateInfo.format = mSwapChainParams.format;
-			imageCreateInfo.components = mapping;
-			imageCreateInfo.subresourceRange = range;
+			VkImageViewCreateInfo imageViewCreateInfo = {};
+			imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			imageViewCreateInfo.pNext = nullptr;
+			imageViewCreateInfo.flags = 0;
+			imageViewCreateInfo.image = images[i];
+			imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			imageViewCreateInfo.format = mSwapChainParams.colorFormat;
+			imageViewCreateInfo.components = mapping;
+			imageViewCreateInfo.subresourceRange = colorRange;
 
-			result = vkCreateImageView(mDevice, &imageCreateInfo, mAllocCallback, &mSwapChainParams.images[i].view);
+			result = vkCreateImageView(mDevice, &imageViewCreateInfo, mAllocCallback, &mSwapChainParams.colorImages[i].view);
 			if (result != VK_SUCCESS)
 			{
 				std::printf("vkCreateImageView failed\n");
 				return false;
 			}
 		}
+
+		//depth/stencil - only a single one
+		VkImageCreateInfo imageCreateInfo = {};
+		imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		imageCreateInfo.pNext = nullptr;
+		imageCreateInfo.flags = 0;
+		imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+		imageCreateInfo.format = mSwapChainParams.depthStencilFormat;
+		imageCreateInfo.extent.width = mSwapChainParams.extent.width;
+		imageCreateInfo.extent.height = mSwapChainParams.extent.height;
+		imageCreateInfo.extent.depth = 1;
+		imageCreateInfo.mipLevels = 1;
+		imageCreateInfo.arrayLayers = 1;
+		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+		imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+		imageCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+		imageCreateInfo.queueFamilyIndexCount = 0;
+		imageCreateInfo.pQueueFamilyIndices = nullptr;
+		imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+
+		result = vkCreateImage(mDevice, &imageCreateInfo, mAllocCallback, &mSwapChainParams.depthStencilImage.image);
+
+		if (result != VK_SUCCESS)
+		{
+			std::printf("vkCreateImage failed for depth/stencil creation\n");
+			return false;
+		}
+
+		VkMemoryRequirements memReq;
+		vkGetImageMemoryRequirements(mDevice, mSwapChainParams.depthStencilImage.image, &memReq);
+
+		uint32_t memType = vkutils::findMemoryType(mPhysicalDevice, memReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		if (memType == UINT32_MAX)
+		{
+			std::printf("Could not find valid memory type for depth/stencil\n");
+			return false;
+		}
+
+		VkMemoryAllocateInfo allocInfo = {};
+		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		allocInfo.allocationSize = memReq.size;
+		allocInfo.memoryTypeIndex = memType;
+		allocInfo.pNext = nullptr;
+
+		result = vkAllocateMemory(mDevice, &allocInfo, mAllocCallback, &mSwapChainParams.depthStencilImage.memory);
+
+		if (result != VK_SUCCESS)
+		{
+			std::printf("vkAllocateMemory failed for depth/stencil creation\n");
+			return false;
+		}
+
+		result = vkBindImageMemory(mDevice, mSwapChainParams.depthStencilImage.image, mSwapChainParams.depthStencilImage.memory, 0);
+
+		if (result != VK_SUCCESS)
+		{
+			std::printf("vkBindImageMemory failed for depth/stencil creation\n");
+			return false;
+		}
+
+		VkImageSubresourceRange depthRange = { VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT,0,1,0,1 };
+		VkImageViewCreateInfo imageViewCreateInfo = {};
+		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		imageViewCreateInfo.pNext = nullptr;
+		imageViewCreateInfo.flags = 0;
+		imageViewCreateInfo.image = mSwapChainParams.depthStencilImage.image;
+		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		imageViewCreateInfo.format = mSwapChainParams.depthStencilFormat;
+		imageViewCreateInfo.components = mapping;
+		imageViewCreateInfo.subresourceRange = depthRange;
+
+		result = vkCreateImageView(mDevice, &imageViewCreateInfo, mAllocCallback, &mSwapChainParams.depthStencilImage.view);
+		if (result != VK_SUCCESS)
+		{
+			std::printf("vkCreateImageView failed for depth/stencil creation\n");
+			return false;
+		}
+
+		mSwapChainParams.depthStencilImage.extent = mSwapChainParams.extent;
 
 		//viewport params
 		mViewPortParams.viewport.height = static_cast<float>(mSwapChainParams.extent.height);
@@ -638,7 +834,6 @@ namespace Jikken
 		mPresentInfo.pSwapchains = &mSwapChainParams.swapChain;
 		mPresentInfo.waitSemaphoreCount = 1;
 		mPresentInfo.pWaitSemaphores = &mRenderFinishedSem;
-		mPresentInfo.pImageIndices = &mSwapChainParams.currentImage;
 		mPresentInfo.pResults = nullptr;
 
 		return true;
@@ -687,7 +882,6 @@ namespace Jikken
 	void VulkanGraphicsDevice::presentFrame()
 	{
 		vkQueueWaitIdle(mGraphicsQueue);
-		//in it's current form we will get annoying harmless debug warnings because we are clearing the image outside a render pass - only temp
 		VkResult result = vkQueuePresentKHR(mGraphicsQueue, &mPresentInfo);
 
 		switch (result)
@@ -711,7 +905,7 @@ namespace Jikken
 	void VulkanGraphicsDevice::_beginFrameCmd(BeginFrameCommand *cmd)
 	{
 		VkClearValue clearValue[2];
-		bool hasDepthStencil = false;
+		bool clearDepthStencil = false;
 		if (cmd->clearFlag & ClearBufferFlags::eColor)
 		{
 			clearValue[0].color = { {cmd->clearColor[0], cmd->clearColor[1], cmd->clearColor[2], cmd->clearColor[3]} };
@@ -722,24 +916,29 @@ namespace Jikken
 			clearValue[1].depthStencil.depth = cmd->depth;
 			//we give stencil a default value of 0
 			clearValue[1].depthStencil.stencil = 0;
-			hasDepthStencil = true;
+			clearDepthStencil = true;
 		}
 
 		if (cmd->clearFlag & ClearBufferFlags::eStencil)
 		{
 			//give depth a default value
-			if (!hasDepthStencil)
+			if (!clearDepthStencil)
 				clearValue[1].depthStencil.depth = 1.0f;
 
 			clearValue[1].depthStencil.stencil = cmd->stencil;
-			hasDepthStencil = true;
+			clearDepthStencil = true;
 		}
 
 		//get the next image in the swap chain
-		//todo check result for VK_ERROR_OUT_OF_DATE_KHR and if found we need to rebuild the swapchain as it will be out of date with the framebuffer size
-		VkResult result = vkAcquireNextImageKHR(mDevice, mSwapChainParams.swapChain, UINT64_MAX, mImageAvailableSem, VK_NULL_HANDLE, &mSwapChainParams.currentImage);
+		//todo check result for VK_ERROR_OUT_OF_DATE_KHR and if found we need to rebuild the swapchain as it will be out of date (possibly a window resize missed)
+		VkResult result = vkAcquireNextImageKHR(mDevice, mSwapChainParams.swapChain, UINT64_MAX, mImageAvailableSem, VK_NULL_HANDLE, &mSwapChainParams.currentImageIndex);
 
-		/*VkRenderPassBeginInfo renderPassBeginInfo = {};
+		//set image index for present info
+		mPresentInfo.pImageIndices = &mSwapChainParams.currentImageIndex;
+
+		VkCommandBuffer cmdBuffer = mCommandBuffers[mSwapChainParams.currentImageIndex];
+
+		VkRenderPassBeginInfo renderPassBeginInfo = {};
 		renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		renderPassBeginInfo.pNext = nullptr;
 		renderPassBeginInfo.renderPass = mRenderPass;
@@ -747,57 +946,18 @@ namespace Jikken
 		renderPassBeginInfo.renderArea.offset.y = 0;
 		renderPassBeginInfo.renderArea.extent.width = mSwapChainParams.extent.width;
 		renderPassBeginInfo.renderArea.extent.height = mSwapChainParams.extent.height;
-		renderPassBeginInfo.clearValueCount = hasDepthStencil ? 2 : 1;
-		renderPassBeginInfo.pClearValues = clearValue;*/
+		renderPassBeginInfo.clearValueCount = clearDepthStencil ? 2 : 1;
+		renderPassBeginInfo.pClearValues = clearValue;
+		renderPassBeginInfo.framebuffer = mSwapChainParams.frameBuffers[mSwapChainParams.currentImageIndex];
 
-		VkImage image = mSwapChainParams.images[mSwapChainParams.currentImage].image;
-		//record clear commands - this will be replaced with VkRenderPassBeginInfo when proper render pass has been implemented - below commands are only temp
-		VkCommandBufferBeginInfo cmdBufferBegininfo;
-		cmdBufferBegininfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		cmdBufferBegininfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-		cmdBufferBegininfo.pNext = nullptr;
-		cmdBufferBegininfo.pInheritanceInfo = nullptr;
+		VkCommandBufferBeginInfo beginInfo = {};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-		VkImageSubresourceRange imageSubresourceRange;
-		imageSubresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		imageSubresourceRange.baseArrayLayer = 0;
-		imageSubresourceRange.baseMipLevel = 0;
-		imageSubresourceRange.layerCount = 1;
-		imageSubresourceRange.levelCount = 1;
-
-		VkImageMemoryBarrier barrierFromPresentClear;
-		barrierFromPresentClear.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		barrierFromPresentClear.pNext = nullptr;
-		barrierFromPresentClear.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrierFromPresentClear.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-		barrierFromPresentClear.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrierFromPresentClear.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrierFromPresentClear.image = image;
-		barrierFromPresentClear.subresourceRange = imageSubresourceRange;
-		barrierFromPresentClear.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		barrierFromPresentClear.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-
-		VkImageMemoryBarrier barrierFromClearPresent;
-		barrierFromClearPresent.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		barrierFromClearPresent.pNext = nullptr;
-		barrierFromClearPresent.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-		barrierFromClearPresent.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrierFromClearPresent.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrierFromClearPresent.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrierFromClearPresent.image = image;
-		barrierFromClearPresent.subresourceRange = imageSubresourceRange;
-		barrierFromClearPresent.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		barrierFromClearPresent.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-		VkCommandBuffer cmdBuffer = mCommandBuffers[mSwapChainParams.currentImage];		
-		vkBeginCommandBuffer(cmdBuffer, &cmdBufferBegininfo);
-		vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrierFromPresentClear);
-		vkCmdClearColorImage(cmdBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearValue[0].color, 1, &imageSubresourceRange);
-		vkCmdPipelineBarrier(cmdBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrierFromClearPresent);
-		//todo - needs VkImageMemoryBarriers
-		//vkCmdClearDepthStencilImage(cmdBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearValue[1].depthStencil, 1, &imageSubresourceRange);
-		result = vkEndCommandBuffer(cmdBuffer);
-
+		vkBeginCommandBuffer(cmdBuffer, &beginInfo);
+		vkCmdBeginRenderPass(cmdBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdEndRenderPass(cmdBuffer);
+		vkEndCommandBuffer(cmdBuffer);
 
 		// Pipeline stage at which the queue submission will wait (via pWaitSemaphores)
 		VkPipelineStageFlags waitStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -813,7 +973,10 @@ namespace Jikken
 		submitInfo.commandBufferCount = 1;
 		
 		result = vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-		float t = 0;
+		if (result != VK_SUCCESS)
+		{
+			std::printf("vkQueueSubmit failed\n");			
+		}
 	}
 
 	void VulkanGraphicsDevice::_updateBufferCmd(UpdateBufferCommand *cmd)

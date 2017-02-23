@@ -36,7 +36,32 @@ namespace Jikken
 		bool checkExtension(const std::string &extensionName, const std::vector<VkExtensionProperties> &extensionList);
 		bool checkLayer(const std::string &layerName, const std::vector<VkLayerProperties> &layerList);
 		bool checkPhysicalDevice(const VkPhysicalDevice physicalDevice, const VkSurfaceKHR surface, uint32_t &graphicsQueue, uint32_t &computeQueue);
+		uint32_t findMemoryType(const VkPhysicalDevice physicalDevice, const uint32_t typeFilter, const VkMemoryPropertyFlags properties);
 		void printDeviceInfo(const VkPhysicalDevice device);
+
+		//execute single commands
+		void beingSingleCommand(const VkCommandBuffer cmdBuffer);
+		void endSingleCommand(const VkCommandBuffer cmdBuffer, const VkQueue queue);
+
+		// based from https://github.com/SaschaWillems/Vulkan
+		// Put an image memory barrier for setting an image layout on the sub resource into the given command buffer
+		void setImageLayout(
+			VkCommandBuffer cmdbuffer,
+			VkImage image,
+			VkImageLayout oldImageLayout,
+			VkImageLayout newImageLayout,
+			VkImageSubresourceRange subresourceRange,
+			VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+			VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+		// Uses a fixed sub resource layout with first mip level and layer
+		void setImageLayout(
+			VkCommandBuffer cmdbuffer,
+			VkImage image,
+			VkImageAspectFlags aspectMask,
+			VkImageLayout oldImageLayout,
+			VkImageLayout newImageLayout,
+			VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+			VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
 
 		uint32_t getSwapChainNumImages(const VkSurfaceCapabilitiesKHR &surfaceCaps);
 		//todo add requested format

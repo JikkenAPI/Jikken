@@ -79,6 +79,8 @@ namespace Jikken
 
 		//private functions
 		bool _createSwapchain();
+		bool _createDefaultRenderPass();
+		bool _createFramebuffers();
 
 		//private variables
 		VkInstance mInstance; //vulkan app instance
@@ -91,6 +93,7 @@ namespace Jikken
 		uint32_t mComputeQueueIndex; // compute queue index
 		VkRenderPass mRenderPass; //render pass
 		std::vector<VkCommandBuffer> mCommandBuffers;
+		VkCommandBuffer mSingleCmdBuffer; //special command buffer used for single command execution
 		VkCommandPool mCommandPool;
 		VkDebugReportCallbackEXT mDebugCallback; //debug callback
 		VkAllocationCallbacks *mAllocCallback; //allocation callback

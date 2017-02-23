@@ -31,33 +31,42 @@ namespace Jikken
 {
 	struct ImageParams
 	{
+		VkExtent2D extent;
 		VkImage image;
 		VkImageView view;
 		VkSampler sampler;
 		VkDeviceMemory memory;
+		VkFormat format;
 
 		ImageParams() :
+			extent(),
 			image(VK_NULL_HANDLE),
 			view(VK_NULL_HANDLE),
 			sampler(VK_NULL_HANDLE),
-			memory(VK_NULL_HANDLE)
+			memory(VK_NULL_HANDLE),
+			format(VK_FORMAT_UNDEFINED)
 		{}
 	};
 
 	struct SwapChainParams
 	{
 		VkSwapchainKHR swapChain;
-		VkFormat format;
 		VkExtent2D extent;
-		std::vector<ImageParams> images;
-		uint32_t currentImage;
+		VkFormat colorFormat;
+		VkFormat depthStencilFormat;
+		std::vector<ImageParams> colorImages;
+		ImageParams depthStencilImage;
+		std::vector<VkFramebuffer> frameBuffers;
+		uint32_t currentImageIndex;
 
 		SwapChainParams() :
 			swapChain(VK_NULL_HANDLE),
-			format(VK_FORMAT_UNDEFINED),
 			extent(),
-			images(),
-			currentImage(0)
+			colorFormat(VK_FORMAT_UNDEFINED),
+			depthStencilFormat(VK_FORMAT_UNDEFINED),
+			colorImages(),
+			depthStencilImage(),
+			currentImageIndex(0)
 		{}
 	};
 
