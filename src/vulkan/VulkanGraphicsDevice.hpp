@@ -32,6 +32,12 @@
 
 namespace Jikken
 {
+	struct VulkanShader
+	{
+		std::vector<VkShaderModule> modules; //see ShaderStage for order
+		std::vector<VkPipelineShaderStageCreateInfo> stages;
+	};
+
 	class VulkanGraphicsDevice : public GraphicsDevice
 	{
 	public:
@@ -105,6 +111,7 @@ namespace Jikken
 		VkSemaphore mRenderFinishedSem;
 
 		ShaderHandle mShaderHandle;
+		std::unordered_map<ShaderHandle, VulkanShader> mShaders;
 	};
 }
 

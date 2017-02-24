@@ -27,11 +27,16 @@
 #include "vulkan/VulkanGraphicsDevice.hpp"
 #include "vulkan/VulkanUtil.hpp"
 #include <array>
+#include "shaderUtils.hpp"
+//just temp for shader loading
+#include <fstream>
+#include <sstream>
 //just temp
 #include <GLFW/glfw3.h>
 
 namespace Jikken
 {
+
 	VulkanGraphicsDevice::VulkanGraphicsDevice() :
 		mInstance(VK_NULL_HANDLE),
 		mSurface(VK_NULL_HANDLE),
@@ -58,6 +63,15 @@ namespace Jikken
 		//wait for device to be idle
 		if (mDevice)
 			vkDeviceWaitIdle(mDevice);
+
+		//delete shaders
+		for (auto &shader : mShaders)
+		{
+			for(auto &module : shader.second.modules)
+				vkDestroyShaderModule(mDevice,module,mAllocCallback);
+		}
+
+		mShaders.clear();
 
 		//destory semaphores
 		if (mImageAvailableSem)
@@ -849,37 +863,57 @@ namespace Jikken
 			return InvalidHandle;
 		}
 
+		VulkanShader shader;
+
 		for (const ShaderDetails &details : shaders)
 		{
-			FILE *file = fopen(details.file.c_str(), "r");
-			if (file == nullptr)
+			//file loading is only temporary
+			std::ifstream stream(details.file);
+			if (!stream.is_open())
 			{
 				std::printf("Unable to open %s for reading! Aborting!", details.file.c_str());
 				return InvalidHandle;
 			}
 
-			// get file size
-			long fileSize;
-			fseek(file, 0, SEEK_END);
-			fileSize = ftell(file);
-			rewind(file);
+			std::stringstream buffer;
+			buffer << stream.rdbuf();
 
-			// read into buffer
-			char *buffer = new char[fileSize + 1];
-			memset(buffer, 0, fileSize + 1);
-			fread(buffer, 1, static_cast<size_t>(fileSize), file);
-			fclose(file);
-
+			std::vector<uint32_t> spirvData;
+			if (!ShaderUtils::convertGlslToSpirv(details.stage, buffer.str(), spirvData))
+			{
+				std::printf("Unable to open convert %s to spirv format! Aborting!", details.file.c_str());
+				return InvalidHandle;
+			}
+			
 			VkShaderModuleCreateInfo createInfo = {};
 			createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-			createInfo.codeSize = fileSize;
-			createInfo.pCode = (uint32_t*)buffer;
+			createInfo.codeSize = spirvData.size() * sizeof(uint32_t);
+			createInfo.pCode = spirvData.data();
 
-			// delete buffer
-			delete[] buffer;
+			VkShaderModule module;
+			VkResult result = vkCreateShaderModule(mDevice, &createInfo, mAllocCallback, &module);
+			if (result != VK_SUCCESS)
+			{
+				std::printf("vkCreateShaderModule failed\n");
+				return InvalidHandle;
+			}
+
+			shader.modules.push_back(module);
+
+			VkPipelineShaderStageCreateInfo piplineStage;
+			piplineStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			piplineStage.pSpecializationInfo = nullptr;
+			piplineStage.flags = 0;
+			piplineStage.pNext = nullptr;
+			piplineStage.module = module;
+			piplineStage.pName = "main";
+			piplineStage.stage = vkutils::getShaderStageFlag(details.stage);
+
+			shader.stages.push_back(piplineStage);
 		}
 
 		ShaderHandle handle = mShaderHandle++;
+		mShaders[handle] = { shader };
 		return handle;
 	}
 

@@ -403,6 +403,18 @@ namespace Jikken
 			setImageLayout(cmdbuffer, image, oldImageLayout, newImageLayout, subresourceRange);
 		}
 
+		VkShaderStageFlagBits getShaderStageFlag(const ShaderStage stage)
+		{
+			switch (stage)
+			{
+			case ShaderStage::eCompute: return VK_SHADER_STAGE_COMPUTE_BIT;
+			case ShaderStage::eFragment: return VK_SHADER_STAGE_FRAGMENT_BIT;
+			case ShaderStage::eGeometry: return VK_SHADER_STAGE_GEOMETRY_BIT;
+			case ShaderStage::eVertex: return VK_SHADER_STAGE_VERTEX_BIT;
+			default: return VK_SHADER_STAGE_VERTEX_BIT;
+			}
+		}
+
 		VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t obj, size_t location,
 			int32_t code, const char* layerPrefix, const char* msg, void* userData)
 		{

@@ -25,6 +25,7 @@
 #ifndef _JIKKEN_VULKAN_VULKANUTIL_HPP_
 #define _JIKKEN_VULKAN_VULKANUTIL_HPP_
 
+#include "jikken/enums.hpp"
 #include <vulkan/vulkan.h>
 #include <string>
 #include <vector>
@@ -71,6 +72,9 @@ namespace Jikken
 		VkPresentModeKHR getSwapChainPresentMode(const std::vector<VkPresentModeKHR> &presentModes);
 		//choose swapchain extent
 		VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+
+		//VkShaderStageFlagBits - todo use static lookup tables
+		VkShaderStageFlagBits getShaderStageFlag(const ShaderStage stage);
 
 		//debug callback
 		VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t obj, size_t location,
