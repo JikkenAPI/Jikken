@@ -22,64 +22,28 @@
 // SOFTWARE.
 //-----------------------------------------------------------------------------
 
-#include <cassert>
-#include "jikken/jikken.hpp"
+#ifndef _JIKKEN_SHADERUTILS_HPP_
+#define _JIKKEN_SHADERUTILS_HPP_
 
-#ifdef JIKKEN_OPENGL
-#include "GL/GLGraphicsDevice.hpp"
-#endif
-#ifdef JIKKEN_VULKAN
-#include "vulkan/VulkanGraphicsDevice.hpp"
-#endif
-
-#include <SPIRV/GlslangToSpv.h>
+#include "jikken/enums.hpp"
+#include <vector>
+#include <string>
 
 namespace Jikken
 {
-	GraphicsDevice* createGraphicsDevice(API api, void *glfwWinHandle)
+	namespace ShaderUtils
 	{
-		//init glslang process
-		glslang::InitializeProcess();
+		//validate glsl source
+		bool validateGlsl(const ShaderStage &stage, const std::string &glslSrc);
 
-		GraphicsDevice* pDevice = nullptr;
-		if (api == API::eOpenGL)
-		{
-#ifdef JIKKEN_OPENGL
-			pDevice = new GLGraphicsDevice();
-#else
-			assert(false);
-			return nullptr;
-#endif
-		}
-		else if (api == API::eVulkan)
-		{
-#ifdef JIKKEN_VULKAN
-			pDevice =  new VulkanGraphicsDevice();
-#else
-			assert(false);
-			return nullptr;
-#endif
-		}
-		else //not yet implemented
-		{
-			assert(false);
-			return nullptr;
-		}
+		//convert glsl to spir-v
+		bool convertGlslToSpirv(const ShaderStage &stage, const std::string &glslIn, std::vector<uint32_t> &spirvOut);
 
-		if (!pDevice->init(glfwWinHandle))
-		{
-			delete pDevice;
-			pDevice = nullptr;
-			assert(false);
-		}
-
-		return pDevice;
-	}
-
-	void destroyGraphicsDevice(GraphicsDevice *device)
-	{
-		delete device;
-		device = nullptr;
-		glslang::FinalizeProcess();
+		// convert back from spir-v to high level languages
+		bool convertSpirvToGlsl(const ShaderStage &stage, const std::vector<uint32_t> &spirvIn, std::string &glslOut);
+		bool convertSpirvToHlsl(const ShaderStage &stage, const std::vector<uint32_t> &spirvIn, std::string &hlslOut);
+		bool convertSpirvToMsl(const ShaderStage &stage, const std::vector<uint32_t> &spirvIn, std::string &mslOut);
 	}
 }
+
+#endif

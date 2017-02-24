@@ -48,7 +48,8 @@ namespace Jikken
 		mDebugCallback(VK_NULL_HANDLE),
 		mAllocCallback(nullptr),
 		mImageAvailableSem(VK_NULL_HANDLE),
-		mRenderFinishedSem(VK_NULL_HANDLE)
+		mRenderFinishedSem(VK_NULL_HANDLE),
+		mShaderHandle(0)
 	{
 	}
 
@@ -841,7 +842,45 @@ namespace Jikken
 
 	ShaderHandle VulkanGraphicsDevice::createShader(const std::vector<ShaderDetails> &shaders)
 	{
-		return InvalidHandle;
+		//check if this will put us over the maximum number of shader handles
+		if ((mShaderHandle + 1) == InvalidHandle)
+		{
+			std::printf("Too many shader handles");
+			return InvalidHandle;
+		}
+
+		for (const ShaderDetails &details : shaders)
+		{
+			FILE *file = fopen(details.file.c_str(), "r");
+			if (file == nullptr)
+			{
+				std::printf("Unable to open %s for reading! Aborting!", details.file.c_str());
+				return InvalidHandle;
+			}
+
+			// get file size
+			long fileSize;
+			fseek(file, 0, SEEK_END);
+			fileSize = ftell(file);
+			rewind(file);
+
+			// read into buffer
+			char *buffer = new char[fileSize + 1];
+			memset(buffer, 0, fileSize + 1);
+			fread(buffer, 1, static_cast<size_t>(fileSize), file);
+			fclose(file);
+
+			VkShaderModuleCreateInfo createInfo = {};
+			createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+			createInfo.codeSize = fileSize;
+			createInfo.pCode = (uint32_t*)buffer;
+
+			// delete buffer
+			delete[] buffer;
+		}
+
+		ShaderHandle handle = mShaderHandle++;
+		return handle;
 	}
 
 	BufferHandle VulkanGraphicsDevice::createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, float *data)

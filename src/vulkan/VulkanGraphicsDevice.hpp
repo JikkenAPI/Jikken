@@ -103,6 +103,8 @@ namespace Jikken
 
 		VkSemaphore mImageAvailableSem;
 		VkSemaphore mRenderFinishedSem;
+
+		ShaderHandle mShaderHandle;
 	};
 }
 
