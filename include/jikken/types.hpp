@@ -33,6 +33,7 @@ namespace Jikken
 	typedef uint32_t ShaderHandle;
 	typedef uint32_t LayoutHandle;
 	typedef uint32_t VertexArrayHandle;
+	typedef uint32_t SamplerHandle;
 
 	const uint32_t InvalidHandle = 0xffffffff;
 }

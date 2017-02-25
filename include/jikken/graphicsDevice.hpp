@@ -54,7 +54,11 @@ namespace Jikken
 
 		virtual VertexArrayHandle createVAO(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer = InvalidHandle) = 0;
 
+		virtual SamplerHandle createSampler(const SamplerUnit &sampler) = 0;
+
 		virtual void bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, const char *name, int32_t index) = 0;
+
+		virtual void deleteSampler(SamplerHandle handle) = 0;
 
 		virtual void deleteVertexInputLayout(LayoutHandle handle) = 0;
 

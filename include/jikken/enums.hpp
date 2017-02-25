@@ -120,6 +120,37 @@ namespace Jikken
 	{
 		eFLOAT = 0
 	};
+
+	enum TextureWrapUType : uint8_t
+	{
+		eClampToEdge = 0,
+		eMirroredRepeat,
+		eRepeat,
+		eClampToBoarder
+	};
+
+	enum TextureWrapVType : uint8_t
+	{
+		eClampToEdge = 0,
+		eMirroredRepeat,
+		eRepeat
+	};
+
+	enum TextureMagnificationType : uint8_t
+	{
+		eNearest = 0,
+		eLinear
+	};
+
+	enum TextureMinificationType : uint8_t
+	{
+		eNearest = 0,
+		eLinear,
+		eNearestMipmapNearest,
+		eLinearMipmapNearest,
+		eNearestMipmapLinear,
+		eLinearMipmapLinear
+	};
 }
 
 #endif

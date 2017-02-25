@@ -44,6 +44,14 @@ namespace Jikken
 		std::string file;
 		ShaderStage stage;
 	};
+
+	struct SamplerUnit
+	{
+		TextureWrapUType uWrap;
+		TextureWrapVType vWrap;
+		TextureMagnificationType magFilter;
+		TextureMinificationType minFilter;
+	};
 }
 
 #endif
