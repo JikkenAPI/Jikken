@@ -121,7 +121,7 @@ namespace Jikken
 		eFLOAT = 0
 	};
 
-	enum TextureWrapUType : uint8_t
+	enum class TextureWrapUType : uint8_t
 	{
 		eClampToEdge = 0,
 		eMirroredRepeat,
@@ -129,20 +129,20 @@ namespace Jikken
 		eClampToBoarder
 	};
 
-	enum TextureWrapVType : uint8_t
+	enum class TextureWrapVType : uint8_t
 	{
 		eClampToEdge = 0,
 		eMirroredRepeat,
 		eRepeat
 	};
 
-	enum TextureMagnificationType : uint8_t
+	enum class TextureMagnificationType : uint8_t
 	{
 		eNearest = 0,
 		eLinear
 	};
 
-	enum TextureMinificationType : uint8_t
+	enum class TextureMinificationType : uint8_t
 	{
 		eNearest = 0,
 		eLinear,

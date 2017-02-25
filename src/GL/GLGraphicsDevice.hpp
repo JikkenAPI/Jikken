@@ -54,6 +54,11 @@ namespace Jikken
 		{
 			GLuint program;
 		};
+
+		struct GLSampler
+		{
+			GLuint sampler;
+		};
 	public:
 		GLGraphicsDevice();
 		virtual ~GLGraphicsDevice();
@@ -66,7 +71,11 @@ namespace Jikken
 
 		virtual VertexArrayHandle createVAO(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer = InvalidHandle) override;
 
+		virtual SamplerHandle createSampler(const SamplerUnit &sampler) override;
+
 		virtual void bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, const char *name, int32_t index) override;
+
+		virtual void deleteSampler(SamplerHandle handle) override;
 
 		virtual void deleteVertexInputLayout(LayoutHandle handle) override;
 
@@ -99,11 +108,13 @@ namespace Jikken
 		std::unordered_map<VertexArrayHandle, GLVAO> mVertexArrayToGL;
 		std::unordered_map<ShaderHandle, GLShader> mShaderToGL;
 		std::unordered_map<LayoutHandle, std::vector<VertexInputLayout>> mLayoutToGL;
+		std::unordered_map<SamplerHandle, GLSampler> mSamplerToGL;
 
 		BufferHandle mBufferHandle;
 		VertexArrayHandle mVertexArrayHandle;
 		ShaderHandle mShaderHandle;
 		LayoutHandle mLayoutHandle;
+		SamplerHandle mSamplerHandle;
 
 		//temp window handle
 		GLFWwindow *mWindowHandle;

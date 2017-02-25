@@ -25,6 +25,7 @@
 #ifndef _JIKKEN_GL_GLUTIL_HPP_
 #define _JIKKEN_GL_GLUTIL_HPP_
 
+#include <unordered_map>
 #include <GL/glew.h>
 #include "jikken/enums.hpp"
 
@@ -40,7 +41,14 @@ namespace Jikken
 		GLenum blendStateToGL(BlendState state);
 		GLenum depthFuncToGL(DepthFunc func);
 
+		static std::unordered_map<TextureWrapUType, GLenum> sUTexCoordToGL;
+		static std::unordered_map<TextureWrapVType, GLenum> sVTexCoordToGL;
+		static std::unordered_map<TextureMagnificationType, GLenum> sTexMagnificationToGL;
+		static std::unordered_map<TextureMinificationType, GLenum> sTexMinificationToGL;
+
 		void printDeviceInfo();
+
+		void initLookupTables();
 	}
 }
 

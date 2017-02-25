@@ -51,6 +51,7 @@ namespace Jikken
 		TextureWrapVType vWrap;
 		TextureMagnificationType magFilter;
 		TextureMinificationType minFilter;
+		float maxAnisotropy;
 	};
 }
 

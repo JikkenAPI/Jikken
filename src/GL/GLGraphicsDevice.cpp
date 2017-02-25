@@ -53,6 +53,9 @@ namespace Jikken
 		mStateCache.depthStencil.firstSet = true;
 		mStateCache.cull.firstSet = true;
 
+		// init lookup table.
+		glutils::initLookupTables();
+
 		glGenVertexArrays(1, &mGlobalVAO);
 		glBindVertexArray(mGlobalVAO);
 	}
@@ -234,6 +237,28 @@ namespace Jikken
 		return handle;
 	}
 
+	SamplerHandle GLGraphicsDevice::createSampler(const SamplerUnit &sampler)
+	{
+		GLuint obj;
+		glGenSamplers(1, &obj);
+		glSamplerParameteri(obj, GL_TEXTURE_WRAP_S, glutils::sUTexCoordToGL[sampler.uWrap]);
+		glSamplerParameteri(obj, GL_TEXTURE_WRAP_T, glutils::sVTexCoordToGL[sampler.vWrap]);
+		glSamplerParameteri(obj, GL_TEXTURE_MAG_FILTER, glutils::sTexMagnificationToGL[sampler.magFilter]);
+		glSamplerParameteri(obj, GL_TEXTURE_MIN_FILTER, glutils::sTexMinificationToGL[sampler.minFilter]);
+
+		// Clamp anisotropy to max value allowed. For now assume 16.
+		// TODO: check MAX anisotropy via driver value.
+		// TODO: check for ext. for now just assume it exists.
+		float anisotropy = sampler.maxAnisotropy;
+		if (anisotropy > 16.0f)
+			anisotropy = 1.0;
+		glSamplerParameterf(obj, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
+
+		SamplerHandle handle = mSamplerHandle++;
+		mSamplerToGL[handle] = { obj };
+		return handle;
+	}
+
 	void GLGraphicsDevice::bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, const char *name, int32_t index)
 	{
 #ifdef _DEBUG
@@ -245,6 +270,12 @@ namespace Jikken
 		glUniformBlockBinding(mShaderToGL[shader].program, glIndex, index);
 		glBindBufferBase(GL_UNIFORM_BUFFER, index, mBufferToGL[cBuffer].buffer);
 		checkGLErrors();
+	}
+
+	void GLGraphicsDevice::deleteSampler(SamplerHandle handle)
+	{
+		glDeleteSamplers(1, &mSamplerToGL[handle].sampler);
+		mSamplerToGL.erase(handle);
 	}
 
 	void GLGraphicsDevice::deleteVertexInputLayout(LayoutHandle handle)

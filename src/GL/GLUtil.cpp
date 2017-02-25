@@ -147,5 +147,31 @@ namespace Jikken
 			std::printf("Renderer: %s\n", glGetString(GL_RENDERER));
 			std::printf("Version: %s\n", glGetString(GL_VERSION));
 		}
+
+		void initLookupTables()
+		{
+			// U texture coordinates
+			sUTexCoordToGL[TextureWrapUType::eClampToEdge] = GL_CLAMP_TO_EDGE;
+			sUTexCoordToGL[TextureWrapUType::eMirroredRepeat] = GL_MIRRORED_REPEAT;
+			sUTexCoordToGL[TextureWrapUType::eRepeat] = GL_REPEAT;
+			sUTexCoordToGL[TextureWrapUType::eClampToBoarder] = GL_CLAMP_TO_BORDER;
+
+			// V texture coordinates
+			sVTexCoordToGL[TextureWrapVType::eClampToEdge] = GL_CLAMP_TO_EDGE;
+			sVTexCoordToGL[TextureWrapVType::eMirroredRepeat] = GL_MIRRORED_REPEAT;
+			sVTexCoordToGL[TextureWrapVType::eRepeat] = GL_REPEAT;
+
+			// texture magnification
+			sTexMagnificationToGL[TextureMagnificationType::eNearest] = GL_NEAREST;
+			sTexMagnificationToGL[TextureMagnificationType::eLinear] = GL_LINEAR;
+
+			// texture minification
+			sTexMinificationToGL[TextureMinificationType::eNearest] = GL_NEAREST;
+			sTexMinificationToGL[TextureMinificationType::eLinear] = GL_LINEAR;
+			sTexMinificationToGL[TextureMinificationType::eNearestMipmapNearest] = GL_NEAREST_MIPMAP_NEAREST;
+			sTexMinificationToGL[TextureMinificationType::eLinearMipmapNearest] = GL_LINEAR_MIPMAP_NEAREST;
+			sTexMinificationToGL[TextureMinificationType::eNearestMipmapLinear] = GL_NEAREST_MIPMAP_LINEAR;
+			sTexMinificationToGL[TextureMinificationType::eLinearMipmapLinear] = GL_LINEAR_MIPMAP_LINEAR;
+		}
 	}
 }
