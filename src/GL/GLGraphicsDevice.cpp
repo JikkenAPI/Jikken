@@ -251,7 +251,7 @@ namespace Jikken
 		// TODO: check for ext. for now just assume it exists.
 		float anisotropy = sampler.maxAnisotropy;
 		if (anisotropy > 16.0f)
-			anisotropy = 1.0;
+			anisotropy = 16.0;
 		glSamplerParameterf(obj, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
 
 		SamplerHandle handle = mSamplerHandle++;
