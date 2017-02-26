@@ -29,117 +29,17 @@ namespace Jikken
 {
 	namespace glutils
 	{
-		GLenum bufferUsageHintToGL(BufferUsageHint hint)
-		{
-			
-			switch (hint)
-			{
-			case BufferUsageHint::eStaticDraw:
-				return GL_STATIC_DRAW;
-			case BufferUsageHint::eDynamicDraw:
-				return GL_DYNAMIC_DRAW;
-			case BufferUsageHint::eStreamDraw:
-				return GL_STREAM_DRAW;
-			default:
-				return GL_INVALID_ENUM;
-			}
-		}
-
-		GLenum bufferTypeToGL(BufferType type)
-		{
-			switch (type)
-			{
-			case BufferType::eVertexBuffer:
-				return GL_ARRAY_BUFFER;
-			case BufferType::eIndexBuffer:
-				return GL_ELEMENT_ARRAY_BUFFER;
-			case BufferType::eConstantBuffer:
-				return GL_UNIFORM_BUFFER;
-			default:
-				return GL_INVALID_ENUM;
-			}
-		}
-
-		GLenum layoutTypeToGL(VertexAttributeType type)
-		{
-			switch (type)
-			{
-			case VertexAttributeType::eFLOAT:
-				return GL_FLOAT;
-			default:
-				return GL_INVALID_ENUM;
-			}
-		}
-
-		GLenum shaderStageToGL(ShaderStage stage)
-		{
-			switch (stage)
-			{
-			case ShaderStage::eVertex:
-				return GL_VERTEX_SHADER;
-			case ShaderStage::eFragment:
-				return GL_FRAGMENT_SHADER;
-			case ShaderStage::eGeometry:
-				return GL_GEOMETRY_SHADER;
-			default:
-				return GL_INVALID_ENUM;
-			}
-		}
-
-		GLenum drawPrimitiveToGL(PrimitiveType type)
-		{
-			switch (type)
-			{
-			case PrimitiveType::eTriangles:
-				return GL_TRIANGLES;
-			case PrimitiveType::eTriangleStrip:
-				return GL_TRIANGLE_STRIP;
-			case PrimitiveType::eLines:
-				return GL_LINES;
-			case PrimitiveType::eLineStrip:
-				return GL_LINE_STRIP;
-			default:
-				return GL_INVALID_ENUM;
-			}
-		}
-
-		GLenum blendStateToGL(BlendState state)
-		{
-			switch (state)
-			{
-			case BlendState::eSrcAlpha:
-				return GL_SRC_ALPHA;
-			case BlendState::eOneMinusSrcAlpha:
-				return GL_ONE_MINUS_SRC_ALPHA;
-			default:
-				return GL_INVALID_ENUM;
-			}
-		}
-
-		GLenum depthFuncToGL(DepthFunc func)
-		{
-			switch (func)
-			{
-			case DepthFunc::eAlways:
-				return GL_ALWAYS;
-			case DepthFunc::eEqual:
-				return GL_EQUAL;
-			case DepthFunc::eGreater:
-				return GL_GREATER;
-			case DepthFunc::eGreaterEqual:
-				return GL_GEQUAL;
-			case DepthFunc::eLess:
-				return GL_LESS;
-			case DepthFunc::eLessEqual:
-				return GL_LEQUAL;
-			case DepthFunc::eNever:
-				return GL_NEVER;
-			case DepthFunc::eNotEqual:
-				return GL_NOTEQUAL;
-			default:
-				return GL_INVALID_ENUM;
-			}
-		}
+		std::unordered_map<TextureWrapUType, GLenum> sUTexCoordToGL;
+		std::unordered_map<TextureWrapVType, GLenum> sVTexCoordToGL;
+		std::unordered_map<TextureMagnificationType, GLenum> sTexMagnificationToGL;
+		std::unordered_map<TextureMinificationType, GLenum> sTexMinificationToGL;
+		std::unordered_map<BufferUsageHint, GLenum> sBufferUsageHintToGL;
+		std::unordered_map<BufferType, GLenum> sBufferTypeToGL;
+		std::unordered_map<VertexAttributeType, GLenum> sVertexAttributeTypeToGL;
+		std::unordered_map<ShaderStage, GLenum> sShaderStageToGL;
+		std::unordered_map<PrimitiveType, GLenum> sPrimitiveTypeToGL;
+		std::unordered_map<BlendState, GLenum> sBlendStateToGL;
+		std::unordered_map<DepthFunc, GLenum> sDepthFuncToGL;
 
 		void printDeviceInfo()
 		{
@@ -172,6 +72,53 @@ namespace Jikken
 			sTexMinificationToGL[TextureMinificationType::eLinearMipmapNearest] = GL_LINEAR_MIPMAP_NEAREST;
 			sTexMinificationToGL[TextureMinificationType::eNearestMipmapLinear] = GL_NEAREST_MIPMAP_LINEAR;
 			sTexMinificationToGL[TextureMinificationType::eLinearMipmapLinear] = GL_LINEAR_MIPMAP_LINEAR;
+
+			// Buffer usage hints
+			sBufferUsageHintToGL[BufferUsageHint::eStaticDraw] = GL_STATIC_DRAW;
+			sBufferUsageHintToGL[BufferUsageHint::eDynamicDraw] = GL_DYNAMIC_DRAW;
+			sBufferUsageHintToGL[BufferUsageHint::eStreamDraw] = GL_STREAM_DRAW;
+
+			// Buffer type
+			sBufferTypeToGL[BufferType::eVertexBuffer] = GL_ARRAY_BUFFER;
+			sBufferTypeToGL[BufferType::eIndexBuffer] = GL_ELEMENT_ARRAY_BUFFER;
+			sBufferTypeToGL[BufferType::eConstantBuffer] = GL_UNIFORM_BUFFER;
+
+			// Vertex Attribute Type
+			sVertexAttributeTypeToGL[VertexAttributeType::eFLOAT] = GL_FLOAT;
+
+			// Shader stage
+			sShaderStageToGL[ShaderStage::eVertex] = GL_VERTEX_SHADER;
+			sShaderStageToGL[ShaderStage::eFragment] = GL_FRAGMENT_SHADER;
+			sShaderStageToGL[ShaderStage::eGeometry] = GL_GEOMETRY_SHADER;
+			sShaderStageToGL[ShaderStage::eCompute] = GL_COMPUTE_SHADER;
+
+			// Primitive Types
+			sPrimitiveTypeToGL[PrimitiveType::eTriangles] = GL_TRIANGLES;
+			sPrimitiveTypeToGL[PrimitiveType::eTriangleStrip] = GL_TRIANGLE_STRIP;
+			sPrimitiveTypeToGL[PrimitiveType::eLines] = GL_LINES;
+			sPrimitiveTypeToGL[PrimitiveType::eLineStrip] = GL_LINE_STRIP;
+
+			// Blend State
+			sBlendStateToGL[BlendState::eZero] = GL_ZERO;
+			sBlendStateToGL[BlendState::eOne] = GL_ONE;
+			sBlendStateToGL[BlendState::eSrcColor] = GL_SRC_COLOR;
+			sBlendStateToGL[BlendState::eOneMinusSrcColor] = GL_ONE_MINUS_SRC_COLOR;
+			sBlendStateToGL[BlendState::eSrcAlpha] = GL_SRC_ALPHA;
+			sBlendStateToGL[BlendState::eOneMinusSrcAlpha] = GL_ONE_MINUS_SRC_ALPHA;
+			sBlendStateToGL[BlendState::eDstAlpha] = GL_DST_ALPHA;
+			sBlendStateToGL[BlendState::eOneMinusDstAlpha] = GL_ONE_MINUS_DST_ALPHA;
+			sBlendStateToGL[BlendState::eDstColor] = GL_DST_COLOR;
+			sBlendStateToGL[BlendState::eOneMinusDstColor] = GL_ONE_MINUS_DST_COLOR;
+
+			// Depth Func
+			sDepthFuncToGL[DepthFunc::eNever] = GL_NEVER;
+			sDepthFuncToGL[DepthFunc::eAlways] = GL_ALWAYS;
+			sDepthFuncToGL[DepthFunc::eLess] = GL_LESS;
+			sDepthFuncToGL[DepthFunc::eEqual] = GL_EQUAL;
+			sDepthFuncToGL[DepthFunc::eNotEqual] = GL_NOTEQUAL;
+			sDepthFuncToGL[DepthFunc::eGreater] = GL_GREATER;
+			sDepthFuncToGL[DepthFunc::eLessEqual] = GL_LEQUAL;
+			sDepthFuncToGL[DepthFunc::eGreaterEqual] = GL_GEQUAL;
 		}
 	}
 }

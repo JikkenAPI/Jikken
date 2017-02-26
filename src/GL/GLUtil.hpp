@@ -33,18 +33,17 @@ namespace Jikken
 {
 	namespace glutils
 	{
-		GLenum bufferUsageHintToGL(BufferUsageHint hint);
-		GLenum bufferTypeToGL(BufferType type);
-		GLenum layoutTypeToGL(VertexAttributeType type);
-		GLenum shaderStageToGL(ShaderStage stage);
-		GLenum drawPrimitiveToGL(PrimitiveType type);
-		GLenum blendStateToGL(BlendState state);
-		GLenum depthFuncToGL(DepthFunc func);
-
-		static std::unordered_map<TextureWrapUType, GLenum> sUTexCoordToGL;
-		static std::unordered_map<TextureWrapVType, GLenum> sVTexCoordToGL;
-		static std::unordered_map<TextureMagnificationType, GLenum> sTexMagnificationToGL;
-		static std::unordered_map<TextureMinificationType, GLenum> sTexMinificationToGL;
+		extern std::unordered_map<TextureWrapUType, GLenum> sUTexCoordToGL;
+		extern std::unordered_map<TextureWrapVType, GLenum> sVTexCoordToGL;
+		extern std::unordered_map<TextureMagnificationType, GLenum> sTexMagnificationToGL;
+		extern std::unordered_map<TextureMinificationType, GLenum> sTexMinificationToGL;
+		extern std::unordered_map<BufferUsageHint, GLenum> sBufferUsageHintToGL;
+		extern std::unordered_map<BufferType, GLenum> sBufferTypeToGL;
+		extern std::unordered_map<VertexAttributeType, GLenum> sVertexAttributeTypeToGL;
+		extern std::unordered_map<ShaderStage, GLenum> sShaderStageToGL;
+		extern std::unordered_map<PrimitiveType, GLenum> sPrimitiveTypeToGL;
+		extern std::unordered_map<BlendState, GLenum> sBlendStateToGL;
+		extern std::unordered_map<DepthFunc, GLenum> sDepthFuncToGL;
 
 		void printDeviceInfo();
 
