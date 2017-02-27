@@ -40,6 +40,9 @@ namespace Jikken
 		std::unordered_map<PrimitiveType, GLenum> sPrimitiveTypeToGL;
 		std::unordered_map<BlendState, GLenum> sBlendStateToGL;
 		std::unordered_map<DepthFunc, GLenum> sDepthFuncToGL;
+		std::unordered_map<TextureInternalFormatType, GLenum> sTextureInternalFormatToGL;
+		std::unordered_map<TextureFormatType, GLenum> sTextureFormatToGL;
+		std::unordered_map<TextureDataType, GLenum> sTextureDataType;
 
 		void printDeviceInfo()
 		{
@@ -119,6 +122,23 @@ namespace Jikken
 			sDepthFuncToGL[DepthFunc::eGreater] = GL_GREATER;
 			sDepthFuncToGL[DepthFunc::eLessEqual] = GL_LEQUAL;
 			sDepthFuncToGL[DepthFunc::eGreaterEqual] = GL_GEQUAL;
+
+			// Texture Internal Format Type
+			sTextureInternalFormatToGL[TextureInternalFormatType::eDepth24] = GL_DEPTH_COMPONENT24;
+			sTextureInternalFormatToGL[TextureInternalFormatType::eRGB] = GL_RGB;
+			sTextureInternalFormatToGL[TextureInternalFormatType::eRGBA] = GL_RGBA;
+
+			// Texture Format Type
+			sTextureFormatToGL[TextureFormatType::eDepth] = GL_DEPTH_COMPONENT;
+			sTextureFormatToGL[TextureFormatType::eRGB] = GL_RGB;
+			sTextureFormatToGL[TextureFormatType::eRGBA] = GL_RGBA;
+
+			// Texture Data Type
+			sTextureDataType[TextureDataType::eUnsignedByte] = GL_UNSIGNED_BYTE;
+			sTextureDataType[TextureDataType::eByte] = GL_BYTE;
+			sTextureDataType[TextureDataType::eUnsignedShort] = GL_UNSIGNED_SHORT;
+			sTextureDataType[TextureDataType::eShort] = GL_SHORT;
+			sTextureDataType[TextureDataType::eFloat] = GL_FLOAT;
 		}
 	}
 }

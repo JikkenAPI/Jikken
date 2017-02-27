@@ -151,6 +151,29 @@ namespace Jikken
 		eNearestMipmapLinear,
 		eLinearMipmapLinear
 	};
+
+	enum class TextureInternalFormatType : uint8_t
+	{
+		eDepth24 = 0,
+		eRGB,
+		eRGBA,
+	};
+
+	enum class TextureFormatType : uint8_t
+	{
+		eDepth = 0,
+		eRGB,
+		eRGBA
+	};
+
+	enum class TextureDataType : uint8_t
+	{
+		eUnsignedByte = 0,
+		eByte,
+		eUnsignedShort,
+		eShort,
+		eFloat
+	};
 }
 
 #endif

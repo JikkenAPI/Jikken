@@ -259,6 +259,48 @@ namespace Jikken
 		return handle;
 	}
 
+	TextureHandle GLGraphicsDevice::createTexture2D(const Texture2DDetails &details)
+	{
+		GLuint obj;
+		glGenTextures(1, &obj);
+
+		bool isArray = details.layers != 0;
+
+		if (!isArray) {
+			glBindTexture(GL_TEXTURE_2D, obj);
+			glTexImage2D(
+				GL_TEXTURE_2D,
+				0,
+				glutils::sTextureInternalFormatToGL[details.internalType],
+				details.width,
+				details.height,
+				0,
+				glutils::sTextureFormatToGL[details.formatType],
+				glutils::sTextureDataType[details.pixelDataType],
+				details.pixelData
+			);
+		} else {
+			// In OpenGL 2D texture arrays are 3D Textures.
+			glBindTexture(GL_TEXTURE_2D_ARRAY, obj);
+			glTexImage3D(
+				GL_TEXTURE_2D_ARRAY,
+				0,
+				glutils::sTextureInternalFormatToGL[details.internalType],
+				details.width,
+				details.height,
+				details.layers,
+				0,
+				glutils::sTextureFormatToGL[details.formatType],
+				glutils::sTextureDataType[details.pixelDataType],
+				details.pixelData
+			);
+		}
+
+		TextureHandle handle = mTextureHandle++;
+		mTextureToGL[handle] = { obj, true, isArray };
+		return handle;
+	}
+
 	void GLGraphicsDevice::bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, const char *name, int32_t index)
 	{
 #ifdef _DEBUG
@@ -270,6 +312,12 @@ namespace Jikken
 		glUniformBlockBinding(mShaderToGL[shader].program, glIndex, index);
 		glBindBufferBase(GL_UNIFORM_BUFFER, index, mBufferToGL[cBuffer].buffer);
 		checkGLErrors();
+	}
+
+	void GLGraphicsDevice::deleteTexture2D(TextureHandle handle)
+	{
+		glDeleteTextures(1, &mTextureToGL[handle].texture);
+		mTextureToGL.erase(handle);
 	}
 
 	void GLGraphicsDevice::deleteSampler(SamplerHandle handle)

@@ -56,7 +56,11 @@ namespace Jikken
 
 		virtual SamplerHandle createSampler(const SamplerUnit &sampler) = 0;
 
+		virtual TextureHandle createTexture2D(const Texture2DDetails &texData) = 0;
+
 		virtual void bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, const char *name, int32_t index) = 0;
+
+		virtual void deleteTexture2D(TextureHandle handle) = 0;
 
 		virtual void deleteSampler(SamplerHandle handle) = 0;
 

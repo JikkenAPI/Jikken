@@ -44,6 +44,9 @@ namespace Jikken
 		extern std::unordered_map<PrimitiveType, GLenum> sPrimitiveTypeToGL;
 		extern std::unordered_map<BlendState, GLenum> sBlendStateToGL;
 		extern std::unordered_map<DepthFunc, GLenum> sDepthFuncToGL;
+		extern std::unordered_map<TextureInternalFormatType, GLenum> sTextureInternalFormatToGL;
+		extern std::unordered_map<TextureFormatType, GLenum> sTextureFormatToGL;
+		extern std::unordered_map<TextureDataType, GLenum> sTextureDataType;
 
 		void printDeviceInfo();
 

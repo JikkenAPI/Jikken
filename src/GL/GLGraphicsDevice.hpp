@@ -59,6 +59,14 @@ namespace Jikken
 		{
 			GLuint sampler;
 		};
+
+		struct GLTexture2D
+		{
+			GLuint texture;
+			bool is2D;
+			bool isArray;
+		};
+
 	public:
 		GLGraphicsDevice();
 		virtual ~GLGraphicsDevice();
@@ -73,7 +81,11 @@ namespace Jikken
 
 		virtual SamplerHandle createSampler(const SamplerUnit &sampler) override;
 
+		virtual TextureHandle createTexture2D(const Texture2DDetails &texData) override;
+
 		virtual void bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, const char *name, int32_t index) override;
+
+		virtual void deleteTexture2D(TextureHandle handle) override;
 
 		virtual void deleteSampler(SamplerHandle handle) override;
 
@@ -109,12 +121,14 @@ namespace Jikken
 		std::unordered_map<ShaderHandle, GLShader> mShaderToGL;
 		std::unordered_map<LayoutHandle, std::vector<VertexInputLayout>> mLayoutToGL;
 		std::unordered_map<SamplerHandle, GLSampler> mSamplerToGL;
+		std::unordered_map<TextureHandle, GLTexture2D> mTextureToGL;
 
 		BufferHandle mBufferHandle;
 		VertexArrayHandle mVertexArrayHandle;
 		ShaderHandle mShaderHandle;
 		LayoutHandle mLayoutHandle;
 		SamplerHandle mSamplerHandle;
+		TextureHandle mTextureHandle;
 
 		//temp window handle
 		GLFWwindow *mWindowHandle;

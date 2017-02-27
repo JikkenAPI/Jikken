@@ -53,6 +53,17 @@ namespace Jikken
 		TextureMinificationType minFilter;
 		float maxAnisotropy;
 	};
+
+	struct Texture2DDetails
+	{
+		TextureInternalFormatType internalType;
+		TextureFormatType formatType;
+		TextureDataType pixelDataType;
+		int32_t layers; // for 2D Array
+		int32_t width;
+		int32_t height;
+		void *pixelData;
+	};
 }
 
 #endif
