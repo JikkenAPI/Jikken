@@ -46,6 +46,8 @@ namespace Jikken
 		mVertexArrayHandle = 0;
 		mShaderHandle = 0;
 		mLayoutHandle = 0;
+		mSamplerHandle = 0;
+		mTextureHandle = 0;
 		mCurrentVAO = 0;
 		mWindowHandle = nullptr;
 
