@@ -174,6 +174,19 @@ namespace Jikken
 		eShort,
 		eFloat
 	};
+
+	enum TextureUnitType : uint8_t
+	{
+		eTextureUnitInvalid = 0xFF,
+		eTextureUnit0 = 0,
+		eTextureUnit1,
+		eTextureUnit2,
+		eTextureUnit3,
+		eTextureUnit4,
+		eTextureUnit5,
+		eTextureUnit6,
+		eTextureUnit7
+	};
 }
 
 #endif

@@ -65,6 +65,7 @@ namespace Jikken
 			GLuint texture;
 			bool is2D;
 			bool isArray;
+			GLuint shaderBindLocation;
 		};
 
 	public:
@@ -84,6 +85,8 @@ namespace Jikken
 		virtual TextureHandle createTexture2D(const Texture2DDetails &texData) override;
 
 		virtual void bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, const char *name, int32_t index) override;
+
+		virtual void bindTextureToShader(TextureHandle textureHandle, const char *shaderTextureName, ShaderHandle shaderHandle) override;
 
 		virtual void deleteTexture2D(TextureHandle handle) override;
 
@@ -115,6 +118,7 @@ namespace Jikken
 		virtual void _blendStateCmd(BlendStateCommand *cmd) override;
 		virtual void _depthStencilStateCmd(DepthStencilStateCommand *cmd) override;
 		virtual void _cullStateCmd(CullStateCommand *cmd) override;
+		virtual void _bindTextureCmd(BindTextureCommand *cmd) override;
 
 		std::unordered_map<BufferHandle, GLBuffer> mBufferToGL;
 		std::unordered_map<VertexArrayHandle, GLVAO> mVertexArrayToGL;

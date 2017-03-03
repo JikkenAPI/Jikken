@@ -281,6 +281,7 @@ namespace Jikken
 				glutils::sTextureDataType[details.pixelDataType],
 				details.pixelData
 			);
+			glGenerateMipmap(GL_TEXTURE_2D);
 		} else {
 			// In OpenGL 2D texture arrays are 3D Textures.
 			glBindTexture(GL_TEXTURE_2D_ARRAY, obj);
@@ -296,10 +297,11 @@ namespace Jikken
 				glutils::sTextureDataType[details.pixelDataType],
 				details.pixelData
 			);
+			glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 		}
 
 		TextureHandle handle = mTextureHandle++;
-		mTextureToGL[handle] = { obj, true, isArray };
+		mTextureToGL[handle] = { obj, true, isArray, TextureUnitType::eTextureUnitInvalid };
 		return handle;
 	}
 
@@ -314,6 +316,13 @@ namespace Jikken
 		glUniformBlockBinding(mShaderToGL[shader].program, glIndex, index);
 		glBindBufferBase(GL_UNIFORM_BUFFER, index, mBufferToGL[cBuffer].buffer);
 		checkGLErrors();
+	}
+
+	void GLGraphicsDevice::bindTextureToShader(TextureHandle textureHandle, const char *name, ShaderHandle shaderHandle)
+	{
+		// All this does is just gets the location so we can bind it to the shader during draw time.
+		GLuint glIndex = glGetUniformLocation(mShaderToGL[shaderHandle].program, name);
+		mTextureToGL[textureHandle].shaderBindLocation = glIndex;
 	}
 
 	void GLGraphicsDevice::deleteTexture2D(TextureHandle handle)
@@ -576,6 +585,35 @@ namespace Jikken
 
 		// We've set it at least once.
 		mStateCache.cull.firstSet = false;
+	}
+
+	void GLGraphicsDevice::_bindTextureCmd(BindTextureCommand *cmd)
+	{
+		auto texture = mTextureToGL[cmd->texture];
+		glActiveTexture(cmd->textureUnit);
+
+		// TODO: Cache binding sampler.
+		glBindSampler(cmd->textureUnit, mSamplerToGL[cmd->sampler].sampler);
+
+		// Figure out what GL texture unit to bind to.
+		if (texture.is2D)
+		{
+			if (texture.isArray)
+			{
+				glBindTexture(GL_TEXTURE_2D_ARRAY, texture.texture);
+			}
+			else
+			{
+				glBindTexture(GL_TEXTURE_2D, texture.texture);
+			}
+		}
+		else
+		{
+			glBindTexture(GL_TEXTURE_3D, texture.texture);
+		}
+
+		// Finally, bind to shader.
+		glUniform1i(texture.shaderBindLocation, cmd->textureUnit);
 	}
 
 	void GLGraphicsDevice::presentFrame()

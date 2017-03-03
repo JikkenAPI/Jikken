@@ -60,6 +60,8 @@ namespace Jikken
 
 		virtual void bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, const char *name, int32_t index) = 0;
 
+		virtual void bindTextureToShader(TextureHandle textureHandle, const char *shaderTextureName, ShaderHandle shaderHandle) = 0;
+		
 		virtual void deleteTexture2D(TextureHandle handle) = 0;
 
 		virtual void deleteSampler(SamplerHandle handle) = 0;
@@ -92,6 +94,7 @@ namespace Jikken
 		virtual void _blendStateCmd(BlendStateCommand *cmd) = 0;
 		virtual void _depthStencilStateCmd(DepthStencilStateCommand *cmd) = 0;
 		virtual void _cullStateCmd(CullStateCommand *cmd) = 0;
+		virtual void _bindTextureCmd(BindTextureCommand *cmd) = 0;
 		std::vector<CommandQueue*> mCommandQueuePool;
 	};
 }

@@ -45,6 +45,7 @@ namespace Jikken
 		eBlendState,
 		eDepthStencilState,
 		eCullState,
+		eBindTexture,
 		eFinishQueue //special value, doesn't need command struct
 	};
 
@@ -131,6 +132,13 @@ namespace Jikken
 		bool enabled;
 		CullFaceState face;
 		WindingOrderState state;
+	};
+
+	struct BindTextureCommand
+	{
+		TextureHandle texture;
+		SamplerHandle sampler;
+		TextureUnitType textureUnit;
 	};
 }
 #endif

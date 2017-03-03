@@ -197,6 +197,11 @@ namespace Jikken
 			writeCmd(cmd, sizeof(DrawCommand));
 		}
 
+		inline void addBindTextureCommand(const BindTextureCommand *cmd)
+		{
+			writeCmd(eBindTexture);
+			writeCmd(cmd, sizeof(BindTextureCommand));
+		}
 
 	private:
 
