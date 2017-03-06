@@ -90,9 +90,7 @@ namespace Jikken
 		}
 
 		//dummy window first to create old style gl context with and init glew
-		WNDCLASSEX wc;
-		PIXELFORMATDESCRIPTOR pfd;
-		ZeroMemory(&wc, sizeof(WNDCLASSEX));
+		WNDCLASSEX wc = {};
 		wc.cbSize = sizeof(WNDCLASSEX);
 		wc.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
 		wc.lpfnWndProc = (WNDPROC)DefWindowProc;
@@ -117,14 +115,15 @@ namespace Jikken
 
 		HDC tmpHDC = GetDC(tmpHWND);
 
-		ZeroMemory(&pfd, sizeof(pfd));
+		PIXELFORMATDESCRIPTOR pfd = {};
 		pfd.nSize = sizeof(pfd);
 		pfd.nVersion = 1;
 		pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
 		pfd.iPixelType = PFD_TYPE_RGBA;
 		pfd.cColorBits = 32;
-		pfd.cDepthBits = 32;
-
+		pfd.cStencilBits = 8;
+		pfd.cDepthBits = 24;
+		pfd.iLayerType = PFD_MAIN_PLANE;
 
 		if (!SetPixelFormat(tmpHDC, ChoosePixelFormat(tmpHDC, &pfd), &pfd))
 		{
@@ -150,20 +149,20 @@ namespace Jikken
             return false;
 		}
 
-		//init glew
-		GLenum err = glewInit();
-		if(err != GLEW_OK )
-		{
-			std::printf("failed to load GL extensions: %s\n", glewGetErrorString(err));
-			wglDeleteContext(tmpHGLRC);
-            DestroyWindow(tmpHWND);
-            return false;
-		}
-
-		wglMakeCurrent(nullptr, nullptr);
+		//init wgl extensions
+		GLenum err = wglewInit();
+		//cleanup temp resources
+		wglMakeCurrent(tmpHDC, nullptr);
 		wglDeleteContext(tmpHGLRC);
+		ReleaseDC(tmpHWND, tmpHDC);
 		DestroyWindow(tmpHWND);
 		UnregisterClass("dummy window class", GetModuleHandle(nullptr));
+		//check wglew init was ok
+		if(err != GLEW_OK )
+		{
+			std::printf("failed to load WGL extensions: %s\n", glewGetErrorString(err));
+            return false;
+		}
 
 		if (!WGLEW_ARB_create_context || !WGLEW_ARB_pixel_format)
 		{
@@ -175,16 +174,19 @@ namespace Jikken
 		mHwnd = static_cast<HWND>(windowData.handle);
 		mHdc = GetDC(mHwnd);
 
-		const uint32_t maxFormats = 20; // max number of returned pixel formats
-		int32_t pixelFormats[maxFormats]; // array of returned pixel formats, best at index 0...
-		uint32_t numFormatsAvailable; // number of matching formats
-
 		int32_t pixelAttribs[50];//raise this if more are needed in getPixelAttribs
 		int32_t num = _getPixelAttribs(contextConfig, pixelAttribs);
+		int32_t pixelFormat = 0;
+		uint32_t numFormats;
+		wglChoosePixelFormatARB(mHdc, pixelAttribs, nullptr, 1, &pixelFormat, &numFormats);
 
-		wglChoosePixelFormatARB(mHdc, pixelAttribs, nullptr, maxFormats, pixelFormats, &numFormatsAvailable);
+		if (!DescribePixelFormat(mHdc, pixelFormat, sizeof(pfd), &pfd))
+		{
+			std::printf("failed to retrieve pixel format for OpenGL window\n");
+			return false;
+		}
 
-		if (!SetPixelFormat(mHdc, pixelFormats[0], &pfd))
+		if (!SetPixelFormat(mHdc, pixelFormat, &pfd))
 		{
 			std::printf("failed to set pixel format on OpenGL window\n");
             return false;
@@ -199,11 +201,11 @@ namespace Jikken
 
 		const int32_t glContextAttributes[] =
 		{
-            WGL_CONTEXT_MAJOR_VERSION_ARB, OGL_MAJOR,
-            WGL_CONTEXT_MINOR_VERSION_ARB, OGL_MINOR,
-            WGL_CONTEXT_FLAGS_ARB, debugFlag,
-            WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-            0
+			WGL_CONTEXT_MAJOR_VERSION_ARB, OGL_MAJOR,
+			WGL_CONTEXT_MINOR_VERSION_ARB, OGL_MINOR,
+			WGL_CONTEXT_FLAGS_ARB, debugFlag,
+			WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+			0
 		};
 
 		mHrc = wglCreateContextAttribsARB(mHdc, nullptr, glContextAttributes);
@@ -217,8 +219,16 @@ namespace Jikken
 		//make our new context current
 		if (!wglMakeCurrent(mHdc, mHrc))
 		{
-            std::printf("failed to make OpenGL context current\n");
-            return false;
+			std::printf("Failed to make context current\n");
+			return false;
+		}
+
+		//init GL extensions
+		err = glewInit();
+		if (err != GLEW_OK)
+		{
+			std::printf("failed to load GL extensions: %s\n", glewGetErrorString(err));
+			return false;
 		}
 
 		//double check version is ok
@@ -249,7 +259,7 @@ namespace Jikken
 
 	void GLContext::clearCurrent()
 	{
-		if (!wglMakeCurrent(nullptr, nullptr))
+		if (!wglMakeCurrent(mHdc, nullptr))
 		{
 			std::printf("Failed to clear context\n");
 		}
