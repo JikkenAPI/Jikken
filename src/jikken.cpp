@@ -51,7 +51,7 @@ namespace Jikken
 			pGraphicsDevice = new GLGraphicsDevice();
 #else
 			assert(false);
-			return nullptr;
+            return false;
 #endif
 		}
 		else if (api == GraphicsApi::eVulkan)
@@ -60,13 +60,13 @@ namespace Jikken
 			pGraphicsDevice = new VulkanGraphicsDevice();
 #else
 			assert(false);
-			return nullptr;
+            return false;
 #endif
 		}
 		else //not yet implemented
 		{
 			assert(false);
-			return nullptr;
+            return false;
 		}
 
 		return pGraphicsDevice->init(contextConfig, windowData);

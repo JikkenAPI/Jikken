@@ -27,6 +27,7 @@
 
 #include "jikken/types.hpp"
 #include "jikken/enums.hpp"
+#include <cstddef>
 
 namespace Jikken
 {
@@ -47,7 +48,7 @@ namespace Jikken
 		eFinishQueue //special value, doesn't need command struct
 	};
 
-	struct SetShaderCommand 
+	struct SetShaderCommand
 	{
 		ShaderHandle handle;
 	};
@@ -118,7 +119,7 @@ namespace Jikken
 	};
 
 	// Right now, just depth. TODO: add stencil
-	struct DepthStencilStateCommand 
+	struct DepthStencilStateCommand
 	{
 		bool depthEnabled;
 		bool depthWrite;

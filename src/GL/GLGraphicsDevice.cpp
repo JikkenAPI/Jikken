@@ -89,7 +89,15 @@ namespace Jikken
 
 		//enable sRGB if requested
 		if (contextConfig.srgbEnabled)
-			glEnable(GL_FRAMEBUFFER_SRGB);
+            glEnable(GL_FRAMEBUFFER_SRGB);
+        else
+            glDisable(GL_FRAMEBUFFER_SRGB);
+
+        //enable msaa if requested
+        if(contextConfig.msaaLevel)
+            glEnable(GL_MULTISAMPLE);
+        else
+            glDisable(GL_MULTISAMPLE);
 
 		glGenVertexArrays(1, &mGlobalVAO);
 		glBindVertexArray(mGlobalVAO);
