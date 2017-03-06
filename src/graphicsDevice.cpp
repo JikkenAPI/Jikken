@@ -22,7 +22,7 @@
 // SOFTWARE.
 //-----------------------------------------------------------------------------
 
-#include "jikken/graphicsDevice.hpp"
+#include "graphicsDevice.hpp"
 #include <algorithm>
 
 namespace Jikken

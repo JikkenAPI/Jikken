@@ -26,12 +26,50 @@
 #define _JIKKEN_JIKKEN_HPP_
 
 #include "jikken/enums.hpp"
-#include "jikken/graphicsDevice.hpp"
+#include "jikken/structs.hpp"
+#include "jikken/commandQueue.hpp"
+#include <vector>
 
 namespace Jikken
 {
-	GraphicsDevice* createGraphicsDevice(API api, void *glfwWinHandle);
-	void destroyGraphicsDevice(GraphicsDevice *device);
+	/////////////////////////////////////////////
+	// Startup and shutdown
+	/////////////////////////////////////////////
+
+	// get list of available adapters
+	//std::vector<Adapter> queryAdapters();
+
+	//initialize jikken - if using null adapter, ContextConfig & NativeWindowData ignored
+	//todo proper Adapter support 
+	bool init(const GraphicsApi api, const ContextConfig &contextConfig, const NativeWindowData &windowData);
+	//shutdown jikken
+	void shutdown();
+
+	/////////////////////////////////////////////
+	// Graphics device functions
+	/////////////////////////////////////////////
+
+	//creation
+	CommandQueue* createCommandQueue();
+	ShaderHandle createShader(const std::vector<ShaderDetails> &shaders);
+	BufferHandle createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, void *data);
+	LayoutHandle createVertexInputLayout(const std::vector<VertexInputLayout> &attributes);
+	VertexArrayHandle createVAO(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer = InvalidHandle);
+	//deletion
+	void deleteCommandQueue(CommandQueue *cmdQueue);
+	void deleteVertexInputLayout(LayoutHandle handle);
+	void deleteVAO(VertexArrayHandle handle);
+	void deleteBuffer(BufferHandle handle);
+	void deleteShader(ShaderHandle handle);
+	//queue submission
+	void submitCommandQueue(CommandQueue *queue);
+	// todo - make command for this??
+	void bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, const char *name, int32_t index);
+	//present the frame
+	void presentFrame();
+	
+	//window resize event
+	void resize(const int32_t width,const int32_t height);
 }
 
 #endif

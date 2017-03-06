@@ -29,10 +29,11 @@
 
 namespace Jikken
 {
-	enum class API : uint8_t
+	enum class GraphicsApi : uint8_t
 	{
 		eNull,
 		eOpenGL,
+		eDirect3D11,
 		eVulkan
 	};
 

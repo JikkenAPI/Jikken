@@ -26,8 +26,6 @@
 #include <cstdlib>
 #include "GL/GLGraphicsDevice.hpp"
 #include "GL/GLUtil.hpp"
-//just temp
-#include <GLFW/glfw3.h>
 
 namespace Jikken
 {
@@ -40,6 +38,24 @@ namespace Jikken
 		}
 	}
 
+	static void APIENTRY debugGLCb(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam)
+	{
+		switch (severity)
+		{
+		case GL_DEBUG_SEVERITY_HIGH:
+			printf("[OpenGL] Severe Error: %s\n", message);
+			break;
+		case GL_DEBUG_SEVERITY_MEDIUM:
+			printf("[OpenGL] Medium Error: %s\n", message);
+			break;
+		case GL_DEBUG_SEVERITY_LOW:
+			printf("[OpenGL] Low Error: %s\n", message);
+			break;
+			//default:
+			//	printf("[OpenGL] Uknown: %s\n", message);
+		}
+	}
+
 	GLGraphicsDevice::GLGraphicsDevice()
 	{
 		mBufferHandle = 0;
@@ -47,26 +63,38 @@ namespace Jikken
 		mShaderHandle = 0;
 		mLayoutHandle = 0;
 		mCurrentVAO = 0;
-		mWindowHandle = nullptr;
 
 		mStateCache.blend.firstSet = true;
 		mStateCache.depthStencil.firstSet = true;
 		mStateCache.cull.firstSet = true;
 
-		glGenVertexArrays(1, &mGlobalVAO);
-		glBindVertexArray(mGlobalVAO);
+		mContext = nullptr;
 	}
 
 	GLGraphicsDevice::~GLGraphicsDevice()
 	{
 		glDeleteVertexArrays(1, &mGlobalVAO);
+		delete mContext;
 	}
 
-	//todo
-	bool GLGraphicsDevice::init(void *glfwWinHandle)
+	bool GLGraphicsDevice::init(const ContextConfig &contextConfig, const NativeWindowData &windowData)
 	{
-		mWindowHandle = static_cast<GLFWwindow*>(glfwWinHandle);
+		mContext = new GLContext;
+		if (!mContext->init(contextConfig,windowData))
+			return false;
+
+		//install debug callback if enabled and is actually supported - there is amd and also arb versions but we don't bother with those
+		if (contextConfig.debugEnabled && glewIsExtensionSupported("GL_KHR_debug"))
+			glDebugMessageCallback(debugGLCb, nullptr);
+
+		//enable sRGB if requested
+		if (contextConfig.srgbEnabled)
+			glEnable(GL_FRAMEBUFFER_SRGB);
+
+		glGenVertexArrays(1, &mGlobalVAO);
+		glBindVertexArray(mGlobalVAO);
 		glutils::printDeviceInfo();
+		checkGLErrors();
 		return true;
 	}
 
@@ -159,7 +187,7 @@ namespace Jikken
 		return handle;
 	}
 
-	BufferHandle GLGraphicsDevice::createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, float *data)
+	BufferHandle GLGraphicsDevice::createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, void *data)
 	{
 		BufferHandle handle = mBufferHandle++;
 		GLuint buffer;
@@ -499,6 +527,6 @@ namespace Jikken
 
 	void GLGraphicsDevice::presentFrame()
 	{
-		glfwSwapBuffers(mWindowHandle);
+		mContext->swapBuffers();
 	}
 }

@@ -27,7 +27,6 @@
 
 #include "jikken/types.hpp"
 #include "jikken/enums.hpp"
-#include "jikken/memory.hpp"
 
 namespace Jikken
 {

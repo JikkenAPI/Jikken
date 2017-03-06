@@ -23,6 +23,7 @@
 //-----------------------------------------------------------------------------
 
 #include <cassert>
+#include "jikken/memory.hpp"
 #include "jikken/jikken.hpp"
 
 #ifdef JIKKEN_OPENGL
@@ -36,25 +37,27 @@
 
 namespace Jikken
 {
-	GraphicsDevice* createGraphicsDevice(API api, void *glfwWinHandle)
+	//globals
+	GraphicsDevice *pGraphicsDevice = nullptr;
+
+	bool init(const GraphicsApi api, const ContextConfig &contextConfig, const NativeWindowData &windowData)
 	{
 		//init glslang process
 		glslang::InitializeProcess();
 
-		GraphicsDevice* pDevice = nullptr;
-		if (api == API::eOpenGL)
+		if (api == GraphicsApi::eOpenGL)
 		{
 #ifdef JIKKEN_OPENGL
-			pDevice = new GLGraphicsDevice();
+			pGraphicsDevice = new GLGraphicsDevice();
 #else
 			assert(false);
 			return nullptr;
 #endif
 		}
-		else if (api == API::eVulkan)
+		else if (api == GraphicsApi::eVulkan)
 		{
 #ifdef JIKKEN_VULKAN
-			pDevice =  new VulkanGraphicsDevice();
+			pGraphicsDevice = new VulkanGraphicsDevice();
 #else
 			assert(false);
 			return nullptr;
@@ -66,20 +69,86 @@ namespace Jikken
 			return nullptr;
 		}
 
-		if (!pDevice->init(glfwWinHandle))
-		{
-			delete pDevice;
-			pDevice = nullptr;
-			assert(false);
-		}
-
-		return pDevice;
+		return pGraphicsDevice->init(contextConfig, windowData);
 	}
 
-	void destroyGraphicsDevice(GraphicsDevice *device)
+	void shutdown()
 	{
-		delete device;
-		device = nullptr;
+		delete pGraphicsDevice;
+		pGraphicsDevice = nullptr;
 		glslang::FinalizeProcess();
 	}
+
+	CommandQueue* createCommandQueue()
+	{
+		return pGraphicsDevice->createCommandQueue();
+	}
+
+	ShaderHandle createShader(const std::vector<ShaderDetails> &shaders)
+	{
+		return pGraphicsDevice->createShader(shaders);
+	}
+
+	BufferHandle createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, void *data)
+	{
+		return pGraphicsDevice->createBuffer(type, hint, dataSize, data);
+	}
+
+	LayoutHandle createVertexInputLayout(const std::vector<VertexInputLayout> &attributes)
+	{
+		return pGraphicsDevice->createVertexInputLayout(attributes);
+	}
+
+	VertexArrayHandle createVAO(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer)
+	{
+		return pGraphicsDevice->createVAO(layout, vertexBuffer, indexBuffer);
+	}
+
+	//deletion
+	void deleteCommandQueue(CommandQueue *cmdQueue)
+	{
+		pGraphicsDevice->deleteCommandQueue(cmdQueue);
+	}
+
+	void deleteVertexInputLayout(LayoutHandle handle)
+	{
+		pGraphicsDevice->deleteVertexInputLayout(handle);
+	}
+
+	void deleteVAO(VertexArrayHandle handle)
+	{
+		pGraphicsDevice->deleteVAO(handle);
+	}
+
+	void deleteBuffer(BufferHandle handle)
+	{
+		pGraphicsDevice->deleteBuffer(handle);
+	}
+
+	void deleteShader(ShaderHandle handle)
+	{
+		pGraphicsDevice->deleteShader(handle);
+	}
+
+	//queue submission
+	void submitCommandQueue(CommandQueue *queue)
+	{
+		pGraphicsDevice->submitCommandQueue(queue);
+	}
+
+	// todo - this shouldn't be here - make command for this
+	void bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, const char *name, int32_t index)
+	{
+		pGraphicsDevice->bindConstantBuffer(shader, cBuffer, name, index);
+	}
+
+	void presentFrame()
+	{
+		pGraphicsDevice->presentFrame();
+	}
+
+	void resize(const int32_t width, const int32_t height)
+	{
+	}
+
 }

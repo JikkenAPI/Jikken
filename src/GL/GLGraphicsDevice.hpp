@@ -27,10 +27,14 @@
 
 #include <unordered_map>
 #include <GL/glew.h>
-#include "jikken/graphicsDevice.hpp"
-
-//temp forward declare
-struct GLFWwindow;
+#include "graphicsDevice.hpp"
+#ifdef _WIN32
+#include "GL/GLContext_wgl.hpp"
+#elif defined __APPLE__ 
+#include "GL/GLContext_nsgl.hpp"
+#else
+#include "GL/GLContext_glx.hpp"
+#endif
 
 namespace Jikken
 {
@@ -60,7 +64,7 @@ namespace Jikken
 
 		virtual ShaderHandle createShader(const std::vector<ShaderDetails> &shaders) override;
 
-		virtual BufferHandle createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, float *data) override;
+		virtual BufferHandle createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, void *data) override;
 
 		virtual LayoutHandle createVertexInputLayout(const std::vector<VertexInputLayout> &attributes) override;
 
@@ -76,7 +80,7 @@ namespace Jikken
 
 		virtual void deleteShader(ShaderHandle handle) override;
 
-		virtual bool init(void *glfwWinHandle) override;
+		virtual bool init(const ContextConfig &contextConfig, const NativeWindowData &windowData) override;
 
 		virtual void presentFrame() override;
 
@@ -105,14 +109,13 @@ namespace Jikken
 		ShaderHandle mShaderHandle;
 		LayoutHandle mLayoutHandle;
 
-		//temp window handle
-		GLFWwindow *mWindowHandle;
-
 		// GL needs a VAO bound for most functions.
 		// This will just make a global one.
 		GLuint mGlobalVAO;
 
 		VertexArrayHandle mCurrentVAO;
+
+		GLContext *mContext;
 
 		struct StateCache
 		{

@@ -48,7 +48,7 @@ namespace Jikken
 
 		virtual ShaderHandle createShader(const std::vector<ShaderDetails> &shaders) = 0;
 
-		virtual BufferHandle createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, float *data) = 0;
+		virtual BufferHandle createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, void *data) = 0;
 
 		virtual LayoutHandle createVertexInputLayout(const std::vector<VertexInputLayout> &attributes) = 0;
 
@@ -65,7 +65,7 @@ namespace Jikken
 		virtual void deleteShader(ShaderHandle handle) = 0;
 
 		void submitCommandQueue(CommandQueue *queue);
-		virtual bool init(void *glfwWinHandle) = 0;
+		virtual bool init(const ContextConfig &contextConfig, const NativeWindowData &windowData) = 0;
 
 		virtual void presentFrame() = 0;
 
