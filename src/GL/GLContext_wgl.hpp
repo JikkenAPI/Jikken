@@ -43,12 +43,13 @@ namespace Jikken
          void swapBuffers();
 		 void setSwapInterval(const int32_t val);
 
-      private:
-         //functions
-         int32_t _getPixelAttribs(const ContextConfig &contextConfig, int32_t *attribs);
-         HDC mHdc;
-         HWND mHwnd;
-         HGLRC mHrc;
+	private:
+		//functions
+		bool _initExtensions();
+		int32_t _getPixelAttribs(const ContextConfig &contextConfig, int32_t *attribs);
+		HDC mHdc;
+		HWND mHwnd;
+		HGLRC mHrc;
 	};
 }
 

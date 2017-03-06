@@ -37,10 +37,9 @@ namespace Jikken
 	{
 		clearCurrent();
 		wglDeleteContext(mHrc);
-		ReleaseDC(mHwnd, mHdc);
 	}
 
-    int32_t GLContext::_getPixelAttribs(const ContextConfig &contextConfig, int32_t *attribs)
+	int32_t GLContext::_getPixelAttribs(const ContextConfig &contextConfig, int32_t *attribs)
 	{
 		int32_t i = 0;
 		attribs[i++] = WGL_DRAW_TO_WINDOW_ARB;
@@ -49,6 +48,8 @@ namespace Jikken
 		attribs[i++] = GL_TRUE;
 		attribs[i++] = WGL_PIXEL_TYPE_ARB;
 		attribs[i++] = WGL_TYPE_RGBA_ARB;
+		attribs[i++] = WGL_DOUBLE_BUFFER_ARB;
+		attribs[i++] = GL_TRUE;
 		attribs[i++] = WGL_ACCELERATION_ARB;
 		attribs[i++] = WGL_FULL_ACCELERATION_ARB;
 
@@ -66,7 +67,7 @@ namespace Jikken
 		attribs[i++] = contextConfig.stencilBits;
 
 		attribs[i++] = WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB;
-        attribs[i++] = contextConfig.srgbEnabled ? GL_TRUE : GL_FALSE;
+		attribs[i++] = contextConfig.srgbEnabled ? GL_TRUE : GL_FALSE;
 
 		if (contextConfig.msaaLevel > 0)
 		{
@@ -80,15 +81,8 @@ namespace Jikken
 		return i;
 	}
 
-	bool GLContext::init(const ContextConfig &contextConfig, const NativeWindowData &windowData)
+	bool GLContext::_initExtensions()
 	{
-		//check we got a window handle first
-		if (!windowData.handle)
-		{
-			std::printf("User supplied window handle does not appear to be valid\n");
-            return false;
-		}
-
 		//dummy window first to create old style gl context with and init glew
 		WNDCLASSEX wc = {};
 		wc.cbSize = sizeof(WNDCLASSEX);
@@ -120,16 +114,13 @@ namespace Jikken
 		pfd.nVersion = 1;
 		pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
 		pfd.iPixelType = PFD_TYPE_RGBA;
-		pfd.cColorBits = 32;
-		pfd.cStencilBits = 8;
-		pfd.cDepthBits = 24;
-		pfd.iLayerType = PFD_MAIN_PLANE;
+		pfd.cColorBits = 24;
 
 		if (!SetPixelFormat(tmpHDC, ChoosePixelFormat(tmpHDC, &pfd), &pfd))
 		{
 			std::printf("failed to set pixel format on OpenGL temporary window\n");
-            DestroyWindow(tmpHWND);
-            return false;
+			DestroyWindow(tmpHWND);
+			return false;
 		}
 
 		HGLRC tmpHGLRC = wglCreateContext(tmpHDC);
@@ -137,31 +128,30 @@ namespace Jikken
 		if (!tmpHGLRC)
 		{
 			std::printf("failed to create temporary OpenGL rendering context\n");
-            DestroyWindow(tmpHWND);
-            return false;
+			DestroyWindow(tmpHWND);
+			return false;
 		}
 
 		if (!wglMakeCurrent(tmpHDC, tmpHGLRC))
 		{
 			std::printf("failed to make temporary OpenGL context current\n");
 			wglDeleteContext(tmpHGLRC);
-            DestroyWindow(tmpHWND);
-            return false;
+			DestroyWindow(tmpHWND);
+			return false;
 		}
 
-		//init wgl extensions
-		GLenum err = wglewInit();
+		//init gl extensions
+		GLenum err = glewInit();
 		//cleanup temp resources
-		wglMakeCurrent(tmpHDC, nullptr);
+		wglMakeCurrent(nullptr, nullptr);
 		wglDeleteContext(tmpHGLRC);
-		ReleaseDC(tmpHWND, tmpHDC);
 		DestroyWindow(tmpHWND);
 		UnregisterClass("dummy window class", GetModuleHandle(nullptr));
-		//check wglew init was ok
-		if(err != GLEW_OK )
+		//check glew init was ok
+		if (err != GLEW_OK)
 		{
-			std::printf("failed to load WGL extensions: %s\n", glewGetErrorString(err));
-            return false;
+			std::printf("failed to load GL extensions: %s\n", glewGetErrorString(err));
+			return false;
 		}
 
 		if (!WGLEW_ARB_create_context || !WGLEW_ARB_pixel_format)
@@ -170,7 +160,23 @@ namespace Jikken
 			return false;
 		}
 
-		//create GL 3.3 context now
+		return true;
+	}
+
+	bool GLContext::init(const ContextConfig &contextConfig, const NativeWindowData &windowData)
+	{
+		//check we got a window handle first
+		if (!windowData.handle)
+		{
+			std::printf("User supplied window handle does not appear to be valid\n");
+			return false;
+		}
+
+		//initialize extensions
+		if (!_initExtensions())
+			return false;
+
+		//create GL 3.3 context
 		mHwnd = static_cast<HWND>(windowData.handle);
 		mHdc = GetDC(mHwnd);
 
@@ -179,17 +185,12 @@ namespace Jikken
 		int32_t pixelFormat = 0;
 		uint32_t numFormats;
 		wglChoosePixelFormatARB(mHdc, pixelAttribs, nullptr, 1, &pixelFormat, &numFormats);
-
-		if (!DescribePixelFormat(mHdc, pixelFormat, sizeof(pfd), &pfd))
-		{
-			std::printf("failed to retrieve pixel format for OpenGL window\n");
-			return false;
-		}
-
+		// pfd is redundant
+		PIXELFORMATDESCRIPTOR pfd = {};
 		if (!SetPixelFormat(mHdc, pixelFormat, &pfd))
 		{
 			std::printf("failed to set pixel format on OpenGL window\n");
-            return false;
+			return false;
 		}
 
 		const GLint OGL_MAJOR = 3;
@@ -199,7 +200,7 @@ namespace Jikken
 		if(contextConfig.debugEnabled)
 			debugFlag = WGL_CONTEXT_DEBUG_BIT_ARB;
 
-		const int32_t glContextAttributes[] =
+		const int32_t contextAttributes[] =
 		{
 			WGL_CONTEXT_MAJOR_VERSION_ARB, OGL_MAJOR,
 			WGL_CONTEXT_MINOR_VERSION_ARB, OGL_MINOR,
@@ -208,26 +209,18 @@ namespace Jikken
 			0
 		};
 
-		mHrc = wglCreateContextAttribsARB(mHdc, nullptr, glContextAttributes);
+		mHrc = wglCreateContextAttribsARB(mHdc, nullptr, contextAttributes);
 
 		if (!mHrc)
 		{
-            std::printf("Failed to create OpenGL rendering context\n");
-            return false;
+			std::printf("Failed to create OpenGL rendering context\n");
+			return false;
 		}
 
 		//make our new context current
 		if (!wglMakeCurrent(mHdc, mHrc))
 		{
 			std::printf("Failed to make context current\n");
-			return false;
-		}
-
-		//init GL extensions
-		err = glewInit();
-		if (err != GLEW_OK)
-		{
-			std::printf("failed to load GL extensions: %s\n", glewGetErrorString(err));
 			return false;
 		}
 
@@ -259,7 +252,7 @@ namespace Jikken
 
 	void GLContext::clearCurrent()
 	{
-		if (!wglMakeCurrent(mHdc, nullptr))
+		if (!wglMakeCurrent(nullptr, nullptr))
 		{
 			std::printf("Failed to clear context\n");
 		}
@@ -269,7 +262,7 @@ namespace Jikken
 	{
 		if (!SwapBuffers(mHdc))
 		{
-            std::printf("Failed to swap buffers\n");
+			std::printf("Failed to swap buffers\n");
 		}
 	}
 
