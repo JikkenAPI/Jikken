@@ -18,6 +18,20 @@ set (JIKKEN_SRC
 	src/jikken.cpp
 )
 
+#FreeBSD
+if(CMAKE_SYSTEM_NAME STREQUAL FreeBSD)
+
+	if($ENV{LOCALBASE})
+  		set(FREEBSD_LOCALBASE $ENV{LOCALBASE})
+	else()
+  		set(FREEBSD_LOCALBASE /usr/local)
+	endif()
+
+	include_directories(${FREEBSD_LOCALBASE}/include)
+	link_directories(${FREEBSD_LOCALBASE}/lib)
+
+endif()
+
 # OpenGL Support is enabled by default.
 option(JIKKEN_OPENGL "Use OpenGL rendering." ON)
 
@@ -67,7 +81,8 @@ if (JIKKEN_OPENGL)
 	
 	add_library(GLEW STATIC thirdparty/glew/src/glew.c)
 	target_include_directories(GLEW PUBLIC thirdparty/glew/include)
-	target_compile_definitions(GLEW PUBLIC GLEW_STATIC)	
+	target_compile_definitions(GLEW PUBLIC GLEW_STATIC)
+	target_compile_definitions(GLEW PUBLIC GLEW_NO_GLU)	
 endif()
 
 if (JIKKEN_VULKAN)
