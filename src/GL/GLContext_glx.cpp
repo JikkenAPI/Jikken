@@ -115,6 +115,77 @@ namespace Jikken
             return config[0]; //something wrong here, return the first
     }
 
+    bool GLContext::_initExtensions()
+    {
+        int glxMajor, glxMinor;
+        // We need glx version 1.3
+        if ( !glXQueryVersion( mDisplay, &glxMajor, &glxMinor ) || ( ( glxMajor == 1 ) && ( glxMinor < 3 ) ) || ( glxMajor < 1 ) )
+        {
+            std::printf("Invalid GLX version. Version 1.3+ is required\n");
+            return false;
+        }
+
+        //create temp legacy context to load extensions
+        glXChooseFBConfig = (GLXFBConfig*(*)(Display *dpy, int screen, const int *attrib_list, int *nelements))glXGetProcAddressARB((GLubyte*)"glXChooseFBConfig");
+        glXGetVisualFromFBConfig = (XVisualInfo*(*)(Display *dpy, GLXFBConfig config))glXGetProcAddressARB((GLubyte*)"glXGetVisualFromFBConfig");
+        int32_t defaultScreen = DefaultScreen(mDisplay);
+        int32_t fbcount = 0;
+        GLXFBConfig *fbc = glXChooseFBConfig(mDisplay, defaultScreen, nullptr, &fbcount);
+
+        if(!fbc || !fbcount)
+        {
+           std::printf("failed to choose a FB config\n");
+           //incase it was fbcount that got us here
+           if( fbc )
+              XFree( fbc );
+
+           return false;
+        }
+
+        XVisualInfo *vi = glXGetVisualFromFBConfig( mDisplay, fbc[0] );
+        XFree( fbc );
+        if(!vi)
+        {
+            std::printf("failed to get a visual from the FB config\n");
+            return false;
+        }
+
+        GLXContext tmpCtx = glXCreateContext(mDisplay, vi, nullptr, True);
+        XFree( vi );
+        if (!tmpCtx)
+        {
+            std::printf("failed to create temporary OpenGL rendering context\n");
+            return false;
+        }
+
+        if(!glXMakeCurrent(mDisplay,mWindow, tmpCtx))
+        {
+            std::printf("failed to make temporary OpenGL context current\n");
+            glXDestroyContext( mDisplay, tmpCtx );
+            return false;
+        }
+
+        GLenum err = glewInit();
+
+        glXMakeCurrent(mDisplay, 0, 0);
+        glXDestroyContext( mDisplay, tmpCtx );
+
+        if (err != GLEW_OK)
+        {
+            std::printf("failed to load GL extensions: %s\n", glewGetErrorString(err));
+            return false;
+        }
+
+        //check we have GLX_ARB_create_context
+        if(!GLXEW_ARB_create_context)
+        {
+            std::printf("GLX_ARB_create_context is required\n");
+            return false;
+        }
+
+        return true;
+    }
+
     bool GLContext::init(const ContextConfig &contextConfig, const NativeWindowData &windowData)
     {
         if (!windowData.handle || !windowData.display)
@@ -127,9 +198,81 @@ namespace Jikken
         mWindow = (uintptr_t)windowData.handle;
         int32_t defaultScreen = DefaultScreen(mDisplay);
 
+        //initialize extensions
+        if (!_initExtensions())
+            return false;
 
+        //create GL 3.3 context
 
-        return false;
+        int32_t pixelAttribs[50];//raise this if more are needed in _getPixelAttribs
+        _getPixelAttribs(contextConfig, pixelAttribs);
+
+        GLXFBConfig fbconfig = nullptr;
+        int32_t fbcount = 0;
+        GLXFBConfig *fbc = glXChooseFBConfig(mDisplay, defaultScreen, nullptr, &fbcount);
+
+        if(!fbc || !fbcount)
+        {
+           std::printf("failed to choose a FB config\n");
+           //incase it was fbcount that got us here
+           if( fbc )
+              XFree( fbc );
+
+           return false;
+        }
+
+        //get best matching for msaa
+        if(contextConfig.msaaLevel)
+            fbconfig = _getBestFBConfig(fbc,fbcount);//get the FBconfig with the most samples per pixel
+        else
+            fbconfig = fbc[0]; //first will do
+
+        const GLint OGL_MAJOR = 3;
+        const GLint OGL_MINOR = 3;
+
+        int32_t debugFlag = 0;
+        if(contextConfig.debugEnabled)
+            debugFlag = GLX_CONTEXT_DEBUG_BIT_ARB;
+
+        const int32_t contextAttributes[] =
+        {
+            GLX_CONTEXT_MAJOR_VERSION_ARB, OGL_MAJOR,
+            GLX_CONTEXT_MINOR_VERSION_ARB, OGL_MINOR,
+            GLX_CONTEXT_FLAGS_ARB, debugFlag,
+            GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
+            None
+        };
+
+        mContext = glXCreateContextAttribsARB( mDisplay, fbconfig, 0, True, contextAttributes );
+        XFree( fbc );
+        if (!mContext)
+        {
+            std::printf("Failed to create OpenGL rendering context\n");
+            return false;
+        }
+
+        if(!glXMakeCurrent(mDisplay,mWindow, mContext))
+        {
+            std::printf("failed to make OpenGL context current\n");
+            return false;
+        }
+
+        //double check version is ok
+        GLint major, minor;
+        glGetIntegerv(GL_MAJOR_VERSION, &major);
+        glGetIntegerv(GL_MINOR_VERSION, &minor);
+
+        if (major < OGL_MAJOR || (major == OGL_MAJOR && minor < OGL_MINOR))
+        {
+            std::printf("OpenGL version 3.3 is required");
+            return false;
+        }
+
+        //set swap interval
+        setSwapInterval(contextConfig.vsyncEnabled ? 1 : 0);
+
+        //happy days
+        return true;
     }
 
     void GLContext::makeCurrent()
