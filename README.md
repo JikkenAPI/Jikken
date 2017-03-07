@@ -9,8 +9,10 @@ A modern abstract 3D rendering API that serves as the API for OpenBlockCraft.
 ### Platform Support
 
 - Windows 7+
+- GNU/Linux
+- FreeBSD
 - MacOS 10.9+ (Planned)
-- GNU/Linux (Planned)
+
 
 ### Compiling
 
