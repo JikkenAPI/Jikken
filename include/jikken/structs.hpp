@@ -47,6 +47,8 @@ namespace Jikken
 	{
 		void* handle;
 		void* display;
+		int32_t fbHeight;
+		int32_t fbWidth;
 	};
 
 	// Render context configuration
