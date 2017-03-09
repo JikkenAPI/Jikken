@@ -47,19 +47,67 @@ namespace Jikken
 		mShaderHandle(0),
 		mLayoutHandle(0),
 		mDevice(nullptr),
-		mDeviceContext(nullptr)
+		mDeviceContext(nullptr),
+		mDebugEnabled(false)
 	{
 	}
 
 	D3D11GraphicsDevice::~D3D11GraphicsDevice()
 	{
+		//release device context
 		d3d11utils::SafeRelease(&mDeviceContext);
+		
+		//report live objects and than release debug interface
+		if (mDebugEnabled)
+		{
+			ID3D11Debug *pDebug = nullptr;
+			mDevice->QueryInterface(IID_PPV_ARGS(&pDebug));
+			pDebug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
+			d3d11utils::SafeRelease(&pDebug);
+		}
+
+		//release device
 		d3d11utils::SafeRelease(&mDevice);
 	}
 
 	bool D3D11GraphicsDevice::init(const ContextConfig &contextConfig, const NativeWindowData &windowData)
 	{
-		return false;
+
+		UINT createDeviceFlags = D3D11_CREATE_DEVICE_SINGLETHREADED | D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+		if (contextConfig.debugEnabled)
+		{
+			createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+			mDebugEnabled = true;
+		}
+		
+		//create ID3D11Device & ID3D11DeviceContext
+		HRESULT result = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, createDeviceFlags, nullptr, 0, D3D11_SDK_VERSION, &mDevice, &mFeatureLevel, &mDeviceContext);
+
+		if (FAILED(result))
+		{
+			// if debug enabled let's try again without the debug device
+			if (mDebugEnabled)
+			{
+				createDeviceFlags &= ~D3D11_CREATE_DEVICE_DEBUG;
+				result = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, createDeviceFlags, nullptr, 0, D3D11_SDK_VERSION, &mDevice, &mFeatureLevel, &mDeviceContext);
+				if (FAILED(result))
+				{
+					std::printf("Failed to create D3D11 device\n");
+					return false;
+				}
+
+				std::printf("D3D11 debugging disabled\n");
+				mDebugEnabled = false;
+			}
+			else
+			{
+				std::printf("Failed to create D3D11 device\n");
+				return false;
+			}
+		}
+
+
+		return true;
 	}
 
 
