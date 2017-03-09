@@ -132,7 +132,7 @@ if (JIKKEN_VULKAN)
 	if(WIN32)
 		target_compile_definitions(Jikken PUBLIC VK_USE_PLATFORM_WIN32_KHR)
 	elseif(UNIX AND NOT APPLE)
-		target_compile_definitions(Jikken PUBLIC VK_USE_PLATFORM_XCB_KHR)
+		target_compile_definitions(Jikken PUBLIC VK_USE_PLATFORM_XLIB_KHR)
 	endif()
 endif()
 
