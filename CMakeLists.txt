@@ -95,6 +95,16 @@ if (JIKKEN_VULKAN)
 	)
 endif()
 
+if (JIKKEN_D3D11)
+	set (JIKKEN_SRC
+		${JIKKEN_SRC}
+		src/d3d11/D3D11GraphicsDevice.cpp
+		src/d3d11/D3D11GraphicsDevice.hpp
+		src/d3d11/D3D11Util.cpp
+		src/d3d11/D3D11Util.hpp
+	)
+endif()
+
 add_library(Jikken STATIC ${JIKKEN_SRC})
 set(JIKKEN_INCLUDE ${JIKKEN_INCLUDE} include src "${JIKKEN_PATH}/thirdparty/glslang" "${JIKKEN_PATH}/thirdparty/glslang/glslang/include" "${JIKKEN_PATH}/thirdparty/SPIRV-Cross")
 set(JIKKEN_LIBS ${JIKKEN_LIBS} glslang SPIRV OSDependent spirv-cross)

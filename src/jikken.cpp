@@ -32,6 +32,9 @@
 #ifdef JIKKEN_VULKAN
 #include "vulkan/VulkanGraphicsDevice.hpp"
 #endif
+#ifdef JIKKEN_D3D11
+#include "d3d11/D3D11GraphicsDevice.hpp"
+#endif
 
 #include <SPIRV/GlslangToSpv.h>
 
@@ -61,6 +64,15 @@ namespace Jikken
 #else
 			assert(false);
             return false;
+#endif
+		}
+		else if (api == GraphicsApi::eDirect3D11)
+		{
+#ifdef JIKKEN_VULKAN
+			pGraphicsDevice = new D3D11GraphicsDevice();
+#else
+			assert(false);
+			return false;
 #endif
 		}
 		else //not yet implemented
