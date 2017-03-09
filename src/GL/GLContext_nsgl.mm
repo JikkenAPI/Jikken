@@ -97,7 +97,11 @@ namespace Jikken
 		
 		// create NSOpenGLView and set it to window.
 		mView = [[NSOpenGLView alloc] initWithFrame:[window frame] pixelFormat:pixelFormat];
+		NSOpenGLContext *context = [[NSOpenGLContext alloc] initWithFormat:pixelFormat shareContext:nil];
+		[mView setOpenGLContext:context];
 		[window setContentView:mView];
+		
+		makeCurrent();
 		
 		//set swap interval
 		setSwapInterval(contextConfig.vsyncEnabled ? 1 : 0);

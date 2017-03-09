@@ -25,7 +25,12 @@
 #ifndef _JIKKEN_GL_GLUTIL_HPP_
 #define _JIKKEN_GL_GLUTIL_HPP_
 
+#ifdef __APPLE__
+#include <OpenGL/OpenGL.h>
+#include <OpenGL/gl3.h>
+#else
 #include <GL/glew.h>
+#endif
 #include "jikken/enums.hpp"
 
 namespace Jikken

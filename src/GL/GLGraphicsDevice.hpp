@@ -26,7 +26,12 @@
 #define _JIKKEN_GL_GLGRAPHICSDEVICE_HPP_
 
 #include <unordered_map>
+#ifdef __APPLE__
+#include <OpenGL/OpenGL.h>
+#include <OpenGL/gl3.h>
+#else
 #include <GL/glew.h>
+#endif
 #include "graphicsDevice.hpp"
 #ifdef _WIN32
 #include "GL/GLContext_wgl.hpp"
