@@ -156,11 +156,7 @@ namespace Jikken
 	bool VulkanGraphicsDevice::init(const ContextConfig &contextConfig, const NativeWindowData &windowData)
 	{
 		//validation layers
-	#ifdef _DEBUG
-		bool validationLayersEnabled = true;
-	#else
-		bool validationLayersEnabled = false;
-	#endif
+		const bool validationLayersEnabled = contextConfig.debugEnabled;
 
 		//grab vulkan instance extension list
 		uint32_t extensionsCount = 0;
