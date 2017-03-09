@@ -31,8 +31,6 @@
 //just temp for shader loading
 #include <fstream>
 #include <sstream>
-//just temp
-#include <GLFW/glfw3.h>
 
 namespace Jikken
 {
@@ -155,14 +153,8 @@ namespace Jikken
 			vkDestroyInstance(mInstance, mAllocCallback);
 	}
 
-	bool VulkanGraphicsDevice::init(void *glfwWinHandle)
+	bool VulkanGraphicsDevice::init(const ContextConfig &contextConfig, const NativeWindowData &windowData)
 	{
-		if (!glfwVulkanSupported())
-		{
-			std::printf("Vulkan is not supported\n");
-			return false;
-		}
-
 		//validation layers
 	#ifdef _DEBUG
 		bool validationLayersEnabled = true;
@@ -188,16 +180,9 @@ namespace Jikken
 			return false;
 		}
 
-		//get required extensions from glfw
-		uint32_t glfwExtCount = 0;
-		const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtCount);
-		if (glfwExtCount == 0)
-		{
-			std::printf("Failed to find any required extensions\n");
-			return false;
-		}
-
-		std::vector<const char*> requiredExtensions(glfwExtensions, glfwExtensions + glfwExtCount);
+		//get required extensions
+		std::vector<const char*> requiredExtensions;
+		vkutils::getRequiredInstanceExtensions(requiredExtensions);
 
 		if (validationLayersEnabled)
 			requiredExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
@@ -294,7 +279,7 @@ namespace Jikken
 		}
 
 		//create window surface
-		result = glfwCreateWindowSurface(mInstance, static_cast<GLFWwindow*>(glfwWinHandle), mAllocCallback, &mSurface);
+		result = vkutils::createSurface(windowData, mInstance, mAllocCallback, &mSurface);
 		if (result != VK_SUCCESS)
 		{
 			std::printf("Failed to create vulkan window surface\n");
@@ -917,7 +902,7 @@ namespace Jikken
 		return handle;
 	}
 
-	BufferHandle VulkanGraphicsDevice::createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, float *data)
+	BufferHandle VulkanGraphicsDevice::createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, void *data)
 	{
 		return InvalidHandle;
 	}

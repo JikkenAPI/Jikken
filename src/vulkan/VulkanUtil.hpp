@@ -26,6 +26,7 @@
 #define _JIKKEN_VULKAN_VULKANUTIL_HPP_
 
 #include "jikken/enums.hpp"
+#include "jikken/structs.hpp"
 #include <vulkan/vulkan.h>
 #include <string>
 #include <vector>
@@ -34,6 +35,8 @@ namespace Jikken
 {
 	namespace vkutils
 	{
+		void getRequiredInstanceExtensions(std::vector<const char*> &extensionList);
+		VkResult createSurface(const NativeWindowData &windowData, VkInstance instance, const VkAllocationCallbacks *allocator,VkSurfaceKHR *surface);
 		bool checkExtension(const std::string &extensionName, const std::vector<VkExtensionProperties> &extensionList);
 		bool checkLayer(const std::string &layerName, const std::vector<VkLayerProperties> &layerList);
 		bool checkPhysicalDevice(const VkPhysicalDevice physicalDevice, const VkSurfaceKHR surface, uint32_t &graphicsQueue, uint32_t &computeQueue);

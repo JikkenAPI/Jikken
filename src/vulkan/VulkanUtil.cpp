@@ -78,6 +78,30 @@ namespace Jikken
 			std::printf("Vulkan version: %u.%u.%u\n", vulkMajor, vulkMinor, vulkPatch);
 		}
 
+		void getRequiredInstanceExtensions(std::vector<const char*> &extensionList)
+		{
+			extensionList.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+			//todo motenvk for macOS
+			#ifdef _WIN32
+				extensionList.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+			#elif defined(__linux__) //todo wayland,mir,xcb
+				extensionList.push_back(VK_KHR_XLIB_SURFACE_EXTENSION_NAME);
+			#endif
+		}
+
+		VkResult createSurface(const NativeWindowData &windowData, VkInstance instance, const VkAllocationCallbacks *allocator, VkSurfaceKHR *surface)
+		{
+			VkResult result;
+		#ifdef _WIN32
+			VkWin32SurfaceCreateInfoKHR surfaceCreateInfo = {};
+			surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+			surfaceCreateInfo.hinstance = GetModuleHandle(NULL);
+			surfaceCreateInfo.hwnd = (HWND)windowData.handle;
+			result = vkCreateWin32SurfaceKHR(instance, &surfaceCreateInfo, allocator, surface);
+		#endif
+			return result;
+		}
+
 		bool checkExtension(const std::string &extensionName, const std::vector<VkExtensionProperties> &extensionList)
 		{
 			for (const auto &ext : extensionList)

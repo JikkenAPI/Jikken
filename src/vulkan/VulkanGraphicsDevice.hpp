@@ -27,7 +27,7 @@
 
 #include <unordered_map>
 #include <vulkan/vulkan.h>
-#include "jikken/graphicsDevice.hpp"
+#include "graphicsDevice.hpp"
 #include "vulkan/VulkanStructs.hpp"
 
 namespace Jikken
@@ -47,7 +47,7 @@ namespace Jikken
 
 		virtual ShaderHandle createShader(const std::vector<ShaderDetails> &shaders) override;
 
-		virtual BufferHandle createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, float *data) override;
+		virtual BufferHandle createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, void *data) override;
 
 		virtual LayoutHandle createVertexInputLayout(const std::vector<VertexInputLayout> &attributes) override;
 
@@ -63,7 +63,7 @@ namespace Jikken
 
 		virtual void deleteShader(ShaderHandle handle) override;
 
-		virtual bool init(void *glfwWinHandle) override;
+		virtual bool init(const ContextConfig &contextConfig, const NativeWindowData &windowData) override;
 
 		virtual void presentFrame() override;
 
