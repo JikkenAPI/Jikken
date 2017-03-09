@@ -107,7 +107,13 @@ if (JIKKEN_OPENGL)
 	if (WIN32)
 		set(JIKKEN_LIBS ${JIKKEN_LIBS} OpenGL32)
 	elseif(APPLE)
-		set(JIKKEN_LIBS ${JIKKEN_LIBS} "-framework OpenGL")
+		set (JIKKEN_LIBS 
+			${JIKKEN_LIBS} 
+			"-framework AppKit"
+			"-framework Foundation"
+			"-framework OpenGL"
+			"-framework Cocoa"
+		)
 	elseif(UNIX)
 		set(JIKKEN_LIBS ${JIKKEN_LIBS} GL)
 	else()

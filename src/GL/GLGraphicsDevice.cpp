@@ -38,6 +38,7 @@ namespace Jikken
 		}
 	}
 
+#if !defined(__APPLE__)
 	static void APIENTRY debugGLCb(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam)
 	{
 		switch (severity)
@@ -55,6 +56,7 @@ namespace Jikken
 			//	printf("[OpenGL] Uknown: %s\n", message);
 		}
 	}
+#endif
 
 	GLGraphicsDevice::GLGraphicsDevice()
 	{
@@ -83,9 +85,11 @@ namespace Jikken
 		if (!mContext->init(contextConfig,windowData))
 			return false;
 
+#if !defined(__APPLE__)
 		//install debug callback if enabled and is actually supported - there is amd and also arb versions but we don't bother with those
 		if (contextConfig.debugEnabled && glewIsExtensionSupported("GL_KHR_debug"))
 			glDebugMessageCallback(debugGLCb, nullptr);
+#endif
 
 		//enable sRGB if requested
 		if (contextConfig.srgbEnabled)
