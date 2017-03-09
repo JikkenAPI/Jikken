@@ -49,6 +49,7 @@ namespace Jikken
 
 	private:
 		//functions
+		void _addViewToWindow(const NativeWindowData &windowData);
 		int32_t _getPixelAttribs(const ContextConfig &contextConfig, int32_t *attribs);
 		
 		NSOpenGLView *mView;
