@@ -150,15 +150,22 @@ namespace Jikken
 			writeData(cmd->data, cmd->dataSize);
 		}
 
-		inline void addReallocBufferCommand(const ReallocBufferCommand *cmd)
+		inline void addAllocBufferCommand(const AllocBufferCommand *cmd)
 		{
-			writeCmd(eReallocBuffer);
+			writeCmd(eAllocBuffer);
 			writeCmd(cmd->buffer);
-			writeCmd(cmd->count);
+			writeCmd(cmd->dataSize);
 			writeCmd(cmd->hint);
-			writeCmd(cmd->stride);
-			//write data
-			writeData(cmd->data, cmd->stride * cmd->count);
+			//write data if any - it's ok to alloc a buffer with nullptr
+			if (cmd->data)
+			{
+				writeCmd(static_cast<uint8_t>(1));//has data flag
+				writeData(cmd->data, cmd->dataSize);
+			}
+			else
+			{
+				writeCmd(static_cast<uint8_t>(0));//no data flag
+			}
 		}
 
 		inline void addClearCommand(const ClearBufferCommand *cmd)

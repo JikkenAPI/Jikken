@@ -199,20 +199,12 @@ namespace Jikken
 		return handle;
 	}
 
-	BufferHandle GLGraphicsDevice::createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, void *data)
+	BufferHandle GLGraphicsDevice::createBuffer(BufferType type)
 	{
-		if (hint == BufferUsageHint::eImmutable && !data)
-		{
-			std::printf("Data must be supplied on creation when using eImmutable");
-			return InvalidHandle;
-		}
-
 		BufferHandle handle = mBufferHandle++;
 		GLuint buffer;
 
 		glGenBuffers(1, &buffer);
-		glBindBuffer(glutils::bufferTypeToGL(type), buffer);
-		glBufferData(glutils::bufferTypeToGL(type), dataSize, data, glutils::bufferUsageHintToGL(hint));
 		checkGLErrors();
 
 		mBufferToGL[handle] = { type, buffer };
@@ -355,13 +347,13 @@ namespace Jikken
 		checkGLErrors();
 	}
 
-	void GLGraphicsDevice::_reallocBufferCmd(ReallocBufferCommand *cmd)
+	void GLGraphicsDevice::_allocBufferCmd(AllocBufferCommand *cmd)
 	{
 		GLBuffer buffer = mBufferToGL[cmd->buffer];
 		glBindBuffer(glutils::bufferTypeToGL(buffer.type), buffer.buffer);
 		glBufferData(
 			glutils::bufferTypeToGL(buffer.type),
-			cmd->stride * cmd->count, 
+			cmd->dataSize,
 			cmd->data, 
 			glutils::bufferUsageHintToGL(cmd->hint)
 		);

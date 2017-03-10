@@ -47,7 +47,7 @@ namespace Jikken
 
 		virtual ShaderHandle createShader(const std::vector<ShaderDetails> &shaders) override;
 
-		virtual BufferHandle createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, void *data) override;
+		virtual BufferHandle createBuffer(BufferType type) override;
 
 		virtual LayoutHandle createVertexInputLayout(const std::vector<VertexInputLayout> &attributes) override;
 
@@ -71,7 +71,7 @@ namespace Jikken
 		virtual void _setShaderCmd(SetShaderCommand *cmd) override;
 		virtual void _beginFrameCmd(BeginFrameCommand *cmd) override;
 		virtual void _updateBufferCmd(UpdateBufferCommand *cmd) override;
-		virtual void _reallocBufferCmd(ReallocBufferCommand *cmd) override;
+		virtual void _allocBufferCmd(AllocBufferCommand *cmd) override;
 		virtual void _drawCmd(DrawCommand *cmd) override;
 		virtual void _drawInstanceCmd(DrawInstanceCommand *cmd) override;
 		virtual void _clearBufferCmd(ClearBufferCommand *cmd) override;

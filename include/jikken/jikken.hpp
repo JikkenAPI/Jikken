@@ -52,7 +52,7 @@ namespace Jikken
 	//creation
 	CommandQueue* createCommandQueue();
 	ShaderHandle createShader(const std::vector<ShaderDetails> &shaders);
-	BufferHandle createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, void *data);
+	BufferHandle createBuffer(BufferType type);
 	LayoutHandle createVertexInputLayout(const std::vector<VertexInputLayout> &attributes);
 	VertexArrayHandle createVAO(LayoutHandle layout, BufferHandle vertexBuffer, BufferHandle indexBuffer = InvalidHandle);
 	//deletion

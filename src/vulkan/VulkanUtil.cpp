@@ -99,7 +99,7 @@ namespace Jikken
 				surfaceCreateInfo.pNext = nullptr;
 				surfaceCreateInfo.flags = 0;
 				surfaceCreateInfo.hinstance = GetModuleHandle(NULL);
-				surfaceCreateInfo.hwnd = (HWND)windowData.handle;
+				surfaceCreateInfo.hwnd = static_cast<HWND>(windowData.handle);
 				result = vkCreateWin32SurfaceKHR(instance, &surfaceCreateInfo, allocator, surface);
 			#elif defined(__linux__) //todo wayland,mir,xcb
 				VkXlibSurfaceCreateInfoKHR surfaceCreateInfo = {};

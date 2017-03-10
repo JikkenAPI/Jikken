@@ -898,7 +898,7 @@ namespace Jikken
 		return handle;
 	}
 
-	BufferHandle VulkanGraphicsDevice::createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, void *data)
+	BufferHandle VulkanGraphicsDevice::createBuffer(BufferType type)
 	{
 		return InvalidHandle;
 	}
@@ -1037,7 +1037,7 @@ namespace Jikken
 	{
 	}
 
-	void VulkanGraphicsDevice::_reallocBufferCmd(ReallocBufferCommand *cmd)
+	void VulkanGraphicsDevice::_allocBufferCmd(AllocBufferCommand *cmd)
 	{
 	}
 

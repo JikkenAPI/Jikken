@@ -48,7 +48,7 @@ namespace Jikken
 
 		virtual ShaderHandle createShader(const std::vector<ShaderDetails> &shaders) = 0;
 
-		virtual BufferHandle createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, void *data) = 0;
+		virtual BufferHandle createBuffer(BufferType type) = 0;
 
 		virtual LayoutHandle createVertexInputLayout(const std::vector<VertexInputLayout> &attributes) = 0;
 
@@ -75,7 +75,7 @@ namespace Jikken
 		virtual void _setShaderCmd(SetShaderCommand *cmd) = 0;
 		virtual void _beginFrameCmd(BeginFrameCommand *cmd) = 0;
 		virtual void _updateBufferCmd(UpdateBufferCommand *cmd) = 0;
-		virtual void _reallocBufferCmd(ReallocBufferCommand *cmd) = 0;
+		virtual void _allocBufferCmd(AllocBufferCommand *cmd) = 0;
 		virtual void _drawCmd(DrawCommand *cmd) = 0;
 		virtual void _drawInstanceCmd(DrawInstanceCommand *cmd) = 0;
 		virtual void _clearBufferCmd(ClearBufferCommand *cmd) = 0;

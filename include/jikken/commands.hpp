@@ -36,7 +36,7 @@ namespace Jikken
 		eSetShader=0,
 		eBeginFrame,
 		eUpdateBuffer,
-		eReallocBuffer,
+		eAllocBuffer,
 		eDraw,
 		eDrawInstance,
 		eClearBuffer,
@@ -69,11 +69,10 @@ namespace Jikken
 		void *data;
 	};
 
-	struct ReallocBufferCommand
+	struct AllocBufferCommand
 	{
 		BufferHandle buffer;
-		size_t stride;
-		size_t count;
+		size_t dataSize;
 		void *data;
 		BufferUsageHint hint;
 	};

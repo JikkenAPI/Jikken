@@ -101,9 +101,9 @@ namespace Jikken
 		return pGraphicsDevice->createShader(shaders);
 	}
 
-	BufferHandle createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, void *data)
+	BufferHandle createBuffer(BufferType type)
 	{
-		return pGraphicsDevice->createBuffer(type, hint, dataSize, data);
+		return pGraphicsDevice->createBuffer(type);
 	}
 
 	LayoutHandle createVertexInputLayout(const std::vector<VertexInputLayout> &attributes)

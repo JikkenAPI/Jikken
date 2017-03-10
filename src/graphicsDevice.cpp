@@ -120,19 +120,25 @@ namespace Jikken
 				break;
 			}
 
-			case eReallocBuffer:
+			case eAllocBuffer:
 			{
-				ReallocBufferCommand cmd;
+				AllocBufferCommand cmd;
 				queue->readCmd(cmd.buffer);
-				queue->readCmd(cmd.count);
+				queue->readCmd(cmd.dataSize);
 				queue->readCmd(cmd.hint);
-				queue->readCmd(cmd.stride);
+				//check if we have data
+				uint8_t hasData;
+				queue->readCmd(hasData);
+				cmd.data = nullptr;
 				//read data pointer address
-				uintptr_t addr;
-				queue->readCmd(addr);
-				cmd.data = reinterpret_cast<void*>(addr);
+				if (hasData)
+				{
+					uintptr_t addr;
+					queue->readCmd(addr);
+					cmd.data = reinterpret_cast<void*>(addr);
+				}
 				//execute cmd
-				_reallocBufferCmd(&cmd);
+				_allocBufferCmd(&cmd);
 				break;
 			}
 
