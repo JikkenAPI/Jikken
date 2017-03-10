@@ -34,12 +34,11 @@ namespace Jikken
 			
 			switch (hint)
 			{
-			case BufferUsageHint::eStaticDraw:
+			case BufferUsageHint::eImmutable:
+			case BufferUsageHint::eStatic:
 				return GL_STATIC_DRAW;
-			case BufferUsageHint::eDynamicDraw:
+			case BufferUsageHint::eDynamic:
 				return GL_DYNAMIC_DRAW;
-			case BufferUsageHint::eStreamDraw:
-				return GL_STREAM_DRAW;
 			default:
 				return GL_INVALID_ENUM;
 			}

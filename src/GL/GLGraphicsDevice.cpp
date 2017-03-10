@@ -201,6 +201,12 @@ namespace Jikken
 
 	BufferHandle GLGraphicsDevice::createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, void *data)
 	{
+		if (hint == BufferUsageHint::eImmutable && !data)
+		{
+			std::printf("Data must be supplied on creation when using eImmutable");
+			return InvalidHandle;
+		}
+
 		BufferHandle handle = mBufferHandle++;
 		GLuint buffer;
 

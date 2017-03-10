@@ -107,9 +107,9 @@ namespace Jikken
 
 	enum class BufferUsageHint : uint8_t
 	{
-		eStaticDraw = 0,
-		eDynamicDraw,
-		eStreamDraw
+		eImmutable = 0,
+		eStatic,
+		eDynamic
 	};
 
 	enum VertexAttributeName : int32_t
