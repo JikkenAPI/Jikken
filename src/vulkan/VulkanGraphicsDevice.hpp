@@ -65,8 +65,6 @@ namespace Jikken
 
 		virtual bool init(const ContextConfig &contextConfig, const NativeWindowData &windowData) override;
 
-		virtual void presentFrame() override;
-
 	protected:
 		virtual void _setShaderCmd(SetShaderCommand *cmd) override;
 		virtual void _beginFrameCmd(BeginFrameCommand *cmd) override;
@@ -80,6 +78,7 @@ namespace Jikken
 		virtual void _blendStateCmd(BlendStateCommand *cmd) override;
 		virtual void _depthStencilStateCmd(DepthStencilStateCommand *cmd) override;
 		virtual void _cullStateCmd(CullStateCommand *cmd) override;
+		virtual void _presentCmd() override;
 
 	private:
 

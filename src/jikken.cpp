@@ -148,15 +148,26 @@ namespace Jikken
 		pGraphicsDevice->submitCommandQueue(queue);
 	}
 
+	//execute 
+	void execute(bool presentToScreen)
+	{
+		pGraphicsDevice->execute(presentToScreen);
+	}
+
+	CommandQueue* getImmediateExecuteQueue()
+	{
+		return pGraphicsDevice->getImmediateExecuteQueue();
+	}
+
+	void executeImmediateQueue()
+	{
+		pGraphicsDevice->executeImmediateQueue();
+	}
+
 	// todo - this shouldn't be here - make command for this
 	void bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, const char *name, int32_t index)
 	{
 		pGraphicsDevice->bindConstantBuffer(shader, cBuffer, name, index);
-	}
-
-	void presentFrame()
-	{
-		pGraphicsDevice->presentFrame();
 	}
 
 	void resize(const int32_t width, const int32_t height)

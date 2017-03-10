@@ -63,10 +63,12 @@ namespace Jikken
 	void deleteShader(ShaderHandle handle);
 	//queue submission
 	void submitCommandQueue(CommandQueue *queue);
+	//queue execution
+	void execute(bool presentToScreen=false);
+	CommandQueue* getImmediateExecuteQueue();
+	void executeImmediateQueue();
 	// todo - make command for this??
 	void bindConstantBuffer(ShaderHandle shader, BufferHandle cBuffer, const char *name, int32_t index);
-	//present the frame
-	void presentFrame();
 	
 	//window resize event
 	void resize(const int32_t width,const int32_t height);

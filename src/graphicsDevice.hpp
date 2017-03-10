@@ -65,13 +65,15 @@ namespace Jikken
 		virtual void deleteShader(ShaderHandle handle) = 0;
 
 		void submitCommandQueue(CommandQueue *queue);
+		void execute(bool presentToScreen);
 		virtual bool init(const ContextConfig &contextConfig, const NativeWindowData &windowData) = 0;
 
-		virtual void presentFrame() = 0;
+		CommandQueue* getImmediateExecuteQueue() {return mImmediateExecQueue;}
+		void executeImmediateQueue();
 
 	protected:
+		void _processQueue(CommandQueue *queue);
 		//queue exec functions
-
 		virtual void _setShaderCmd(SetShaderCommand *cmd) = 0;
 		virtual void _beginFrameCmd(BeginFrameCommand *cmd) = 0;
 		virtual void _updateBufferCmd(UpdateBufferCommand *cmd) = 0;
@@ -84,7 +86,12 @@ namespace Jikken
 		virtual void _blendStateCmd(BlendStateCommand *cmd) = 0;
 		virtual void _depthStencilStateCmd(DepthStencilStateCommand *cmd) = 0;
 		virtual void _cullStateCmd(CullStateCommand *cmd) = 0;
+		virtual void _presentCmd() = 0;
+
 		std::vector<CommandQueue*> mCommandQueuePool;
+		std::vector<CommandQueue*> mExecutionPool;
+		//special command queue dedicated to tasks that need to be executed Immediately
+		CommandQueue *mImmediateExecQueue;
 	};
 }
 

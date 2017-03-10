@@ -933,7 +933,7 @@ namespace Jikken
 	{
 	}
 	
-	void VulkanGraphicsDevice::presentFrame()
+	void VulkanGraphicsDevice::_presentCmd()
 	{
 		vkQueueWaitIdle(mGraphicsQueue);
 		VkResult result = vkQueuePresentKHR(mGraphicsQueue, &mPresentInfo);

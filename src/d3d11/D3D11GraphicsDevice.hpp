@@ -32,6 +32,29 @@
 
 namespace Jikken
 {
+	struct SwapChain
+	{
+		IDXGISwapChain *swapChain;
+		ID3D11Texture2D *backBuffer;
+		ID3D11Texture2D *depthStencil;
+		ID3D11RenderTargetView* backBufferView;
+		ID3D11DepthStencilView* depthStencilView;
+
+		SwapChain() :
+			swapChain(nullptr),
+			backBuffer(nullptr),
+			depthStencil(nullptr),
+			backBufferView(nullptr),
+			depthStencilView(nullptr)
+		{}
+	};
+
+	struct D3D11Buffer
+	{
+		BufferType type;
+		ID3D11Buffer *buffer;
+	};
+
 	class D3D11GraphicsDevice : public GraphicsDevice
 	{
 	public:
@@ -40,7 +63,7 @@ namespace Jikken
 
 		virtual ShaderHandle createShader(const std::vector<ShaderDetails> &shaders) override;
 
-		virtual BufferHandle createBuffer(BufferType type, BufferUsageHint hint, size_t dataSize, void *data) override;
+		virtual BufferHandle createBuffer(BufferType type) override;
 
 		virtual LayoutHandle createVertexInputLayout(const std::vector<VertexInputLayout> &attributes) override;
 
@@ -58,14 +81,12 @@ namespace Jikken
 
 		virtual bool init(const ContextConfig &contextConfig, const NativeWindowData &windowData) override;
 
-		virtual void presentFrame() override;
-
 	protected:
 
 		virtual void _setShaderCmd(SetShaderCommand *cmd) override;
 		virtual void _beginFrameCmd(BeginFrameCommand *cmd) override;
 		virtual void _updateBufferCmd(UpdateBufferCommand *cmd) override;
-		virtual void _reallocBufferCmd(ReallocBufferCommand *cmd) override;
+		virtual void _allocBufferCmd(AllocBufferCommand *cmd) override;
 		virtual void _drawCmd(DrawCommand *cmd) override;
 		virtual void _drawInstanceCmd(DrawInstanceCommand *cmd) override;
 		virtual void _clearBufferCmd(ClearBufferCommand *cmd) override;
@@ -74,6 +95,7 @@ namespace Jikken
 		virtual void _blendStateCmd(BlendStateCommand *cmd) override;
 		virtual void _depthStencilStateCmd(DepthStencilStateCommand *cmd) override;
 		virtual void _cullStateCmd(CullStateCommand *cmd) override;
+		virtual void _presentCmd() override;
 
 	
 		BufferHandle mBufferHandle;
@@ -83,8 +105,12 @@ namespace Jikken
 
 		ID3D11Device* mDevice;
 		ID3D11DeviceContext* mDeviceContext;
+		SwapChain mSwapChain;
 		D3D_FEATURE_LEVEL mFeatureLevel;
 		bool mDebugEnabled;
+		uint32_t mPresentInterval;
+
+		std::unordered_map<BufferHandle, D3D11Buffer> mBuffers;
 
 	};
 }

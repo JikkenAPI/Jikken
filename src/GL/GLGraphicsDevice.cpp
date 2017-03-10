@@ -535,7 +535,7 @@ namespace Jikken
 		mStateCache.cull.firstSet = false;
 	}
 
-	void GLGraphicsDevice::presentFrame()
+	void GLGraphicsDevice::_presentCmd()
 	{
 		mContext->swapBuffers();
 	}

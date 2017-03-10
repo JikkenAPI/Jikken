@@ -204,7 +204,6 @@ namespace Jikken
 			writeCmd(cmd, sizeof(DrawCommand));
 		}
 
-
 	private:
 
 		MemoryPool mBufferMemory;

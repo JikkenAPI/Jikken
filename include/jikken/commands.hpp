@@ -45,7 +45,7 @@ namespace Jikken
 		eBlendState,
 		eDepthStencilState,
 		eCullState,
-		eFinishQueue //special value, doesn't need command struct
+		eFinishQueue //special internal value to mark the queue has finished
 	};
 
 	struct SetShaderCommand

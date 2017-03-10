@@ -29,10 +29,13 @@ namespace Jikken
 {
 	GraphicsDevice::GraphicsDevice()
 	{
+		mImmediateExecQueue = new CommandQueue;
 	}
 
 	GraphicsDevice::~GraphicsDevice()
 	{
+		delete mImmediateExecQueue;
+		mExecutionPool.clear();
 		// Cleanup all command queues.
 		for (CommandQueue *queue : mCommandQueuePool)
 		{
@@ -56,12 +59,31 @@ namespace Jikken
 		cmdQueue = nullptr;
 	}
 
-	void GraphicsDevice::submitCommandQueue(CommandQueue *queue)
+	void GraphicsDevice::execute(bool presentToScreen)
 	{
-		//mark queue as finished (i.e write eFinishQueue)
-		queue->finish();
+		//execute all the commands
+		for (auto &queue : mExecutionPool)
+		{
+			_processQueue(queue);
+		}
 
-	    //decode all commands and execute them
+		//presenting to the screen?
+		if (presentToScreen)
+			_presentCmd();
+
+		//clear the execution pool
+		mExecutionPool.clear();
+	}
+
+	void GraphicsDevice::executeImmediateQueue()
+	{
+		mImmediateExecQueue->finish();
+		_processQueue(mImmediateExecQueue);
+	}
+
+	void GraphicsDevice::_processQueue(CommandQueue *queue)
+	{
+		//decode all commands and execute them
 		bool queueEnd = false;
 		while (!queueEnd)
 		{
@@ -199,5 +221,13 @@ namespace Jikken
 
 		//reset queue so it can be used again
 		queue->reset();
+	}
+
+	void GraphicsDevice::submitCommandQueue(CommandQueue *queue)
+	{
+		//mark queue as finished (i.e write eFinishQueue)
+		queue->finish();
+		//add queue to the execution pool
+		mExecutionPool.push_back(queue);
 	}
 }
